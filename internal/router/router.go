@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/Bendomey/fincore-engine/internal/handlers"
 	"github.com/Bendomey/fincore-engine/pkg"
 )
 
@@ -31,7 +30,11 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 		http.ServeFile(w, r, "api/openapi.yaml")
 	})
 
-	r.Get("/docs", handlers.SwaggerUI())
+	if appCtx.Config.Env != "production" {
+		r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "api/swagger-ui/index.html")
+		})
+	}
 
 	return r
 }
