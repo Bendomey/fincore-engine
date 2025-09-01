@@ -2,15 +2,26 @@ package router
 
 import (
 	"net/http"
+	"time"
 
+	appMiddleware "github.com/Bendomey/fincore-engine/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/Bendomey/fincore-engine/pkg"
+	"github.com/go-chi/httprate"
 )
 
 func New(appCtx pkg.AppContext) *chi.Mux {
 	r := chi.NewRouter()
+
+	// Rate limit: max 100 requests per minute per IP.
+	r.Use(httprate.LimitByIP(100, 1*time.Minute))
+
+	r.Use(appMiddleware.VerifyAuthMiddleware(appCtx))
+
+	// rate limit for authed routes
+	r.Use(appMiddleware.RateLimitMiddleware)
 
 	r.Use(middleware.AllowContentType("application/json"))
 	r.Use(middleware.RequestID)

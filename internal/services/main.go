@@ -11,5 +11,6 @@ type Services struct {
 func NewServices(repository repository.Repository) Services {
 
 	clientService := NewClientService(repository.ClientRepository)
+
 	return Services{ClientService: clientService}
 }

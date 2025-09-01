@@ -11,6 +11,7 @@ import (
 	"github.com/Bendomey/fincore-engine/internal/services"
 	"github.com/Bendomey/fincore-engine/pkg"
 	"github.com/getsentry/raven-go"
+	"github.com/go-playground/validator/v10"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -29,9 +30,12 @@ func main() {
 		log.Fatal("failed to connect db:", err)
 	}
 
+	// singleton is efficient.
+	validate := validator.New()
+
 	repository := repository.NewRepository(database)
 	services := services.NewServices(repository)
-	handlers := handlers.NewHandlers(services)
+	handlers := handlers.NewHandlers(services, validate)
 
 	appCtx := pkg.AppContext{
 		DB:         database,
@@ -39,6 +43,7 @@ func main() {
 		Repository: repository,
 		Services:   services,
 		Handlers:   handlers,
+		Validator:  validate,
 	}
 
 	r := router.New(appCtx)
