@@ -51,7 +51,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 
 	// serve openapi.yaml + docs
 	r.Get("/swagger.yaml", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "api/specs/index.yaml")
+		http.ServeFile(w, r, "api/service-specs/index.yaml")
 	})
 
 	if appCtx.Config.Env != "production" {
