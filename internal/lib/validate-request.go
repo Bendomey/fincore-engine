@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -11,10 +12,10 @@ import (
 func ValidateRequest(validate *validator.Validate, body interface{}, w http.ResponseWriter) bool {
 	if err := validate.Struct(body); err != nil {
 		errs := err.(validator.ValidationErrors)
-		errorMessages := make([]string, len(errs))
+		errorMessages := make(map[string]string)
 
-		for i, e := range errs {
-			errorMessages[i] = fmt.Sprintf("field '%s' failed validation rule '%s'", e.Field(), e.Tag())
+		for _, e := range errs {
+			errorMessages[strings.ToLower(e.Field())] = fmt.Sprintf("Failed validation rule '%s'", e.Tag())
 		}
 
 		w.WriteHeader(http.StatusUnprocessableEntity)

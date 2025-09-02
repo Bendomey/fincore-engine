@@ -11,6 +11,7 @@ import (
 	"github.com/getsentry/raven-go"
 	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type ClientService interface {
@@ -33,7 +34,12 @@ func (s *clientService) AuthenticateClient(ctx context.Context, clientId string,
 		return nil, err
 	}
 
-	if client == nil || VerifyClientSecret(client.ClientSecretHash, clientSecret) {
+	if client == nil {
+		return nil, errors.New("invalid client credentials")
+	}
+
+	isVerified := VerifyClientSecret(client.ClientSecretHash, clientSecret)
+	if !isVerified {
 		return nil, errors.New("invalid client credentials")
 	}
 
@@ -55,6 +61,20 @@ type CreateUserResponse struct {
 }
 
 func (s *clientService) CreateClient(ctx context.Context, input CreateUserInput) (*CreateUserResponse, error) {
+
+	// does email exists?
+	clientByEmail, clientByEmailErr := s.repo.GetByClientEmail(ctx, input.Email)
+
+	if clientByEmailErr != nil {
+		if !errors.Is(clientByEmailErr, gorm.ErrRecordNotFound) {
+			raven.CaptureError(clientByEmailErr, nil)
+			return nil, clientByEmailErr
+		}
+	}
+
+	if clientByEmail != nil {
+		return nil, errors.New("email already in use")
+	}
 
 	uuidV4, err := uuid.NewV4()
 	if err != nil {

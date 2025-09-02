@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/Bendomey/fincore-engine/internal/lib"
 	"github.com/Bendomey/fincore-engine/pkg"
 )
 
@@ -20,7 +21,7 @@ func VerifyAuthMiddleware(appCtx pkg.AppContext) func(http.Handler) http.Handler
 				}
 
 				// Attach client to context
-				ctx := WithClient(r.Context(), client)
+				ctx := lib.WithClient(r.Context(), client)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
@@ -32,7 +33,7 @@ func VerifyAuthMiddleware(appCtx pkg.AppContext) func(http.Handler) http.Handler
 
 func CheckForAuthPresenceMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client, ok := ClientFromContext(r.Context())
+		client, ok := lib.ClientFromContext(r.Context())
 		if !ok || client == nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

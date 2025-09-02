@@ -8,6 +8,7 @@ import (
 )
 
 type ClientRepository interface {
+	GetByClientEmail(context context.Context, email string) (*models.Client, error)
 	GetByClientID(context context.Context, clientId string) (*models.Client, error)
 	GetByID(context context.Context, id string) (*models.Client, error)
 	Create(context context.Context, client *models.Client) error
@@ -27,6 +28,16 @@ func (r *clientRepository) GetByClientID(ctx context.Context, clientId string) (
 	if result.Error != nil {
 		return nil, result.Error
 	}
+	return &client, nil
+}
+
+func (r *clientRepository) GetByClientEmail(ctx context.Context, email string) (*models.Client, error) {
+	var client models.Client
+	result := r.DB.WithContext(ctx).Where("email = ?", email).First(&client)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
 	return &client, nil
 }
 

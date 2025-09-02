@@ -27,7 +27,7 @@ type CreateUserRequest struct {
 func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	var body CreateUserRequest
 	if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
-		http.Error(w, decodeErr.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 		return
 	}
 
@@ -43,26 +43,31 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{
+			"errors": map[string]string{
+				"message": err.Error(),
+			},
+		})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]any{
-		"message": "Client created successfully",
-		"data":    transformations.DBClientToRestClient(&client.Client, &client.Secret),
+		"data": transformations.DBClientToRestClient(&client.Client, &client.Secret),
 	})
 
 }
 
 func (h *ClientHandler) GetClient(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	client, clientOk := lib.ClientFromContext(r.Context())
 
-	client, err := h.service.GetClient(r.Context(), id)
-
-	if err != nil {
-		http.Error(w, "client not found", http.StatusNotFound)
+	if !clientOk {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	json.NewEncoder(w).Encode(client)
+
+	json.NewEncoder(w).Encode(map[string]any{
+		"data": transformations.DBClientToRestClient(client, nil),
+	})
 }

@@ -11,13 +11,12 @@ func DBClientToRestClient(i *models.Client, secret *string) interface{} {
 	}
 
 	data := map[string]interface{}{
-		"id":        i.ID.String(),
-		"name":      i.Name,
-		"email":     i.Email,
-		"clientId":  i.ClientID,
-		"createdAt": i.CreatedAt,
-		"updatedAt": i.UpdatedAt,
-		"deletedAt": i.DeletedAt,
+		"id":         i.ID.String(),
+		"name":       i.Name,
+		"email":      i.Email,
+		"client_id":  i.ClientID,
+		"created_at": i.CreatedAt,
+		"updated_at": i.UpdatedAt,
 	}
 
 	// don't send this as output if it doesn't exist.
