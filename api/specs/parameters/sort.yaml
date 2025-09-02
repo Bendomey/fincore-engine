@@ -1,0 +1,7 @@
+name: sort
+description: Change default sort behavior
+in: query
+required: false
+schema:
+  $ref: ../schemas/enums/sort_type.yaml
+

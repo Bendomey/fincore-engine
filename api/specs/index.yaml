@@ -1,0 +1,80 @@
+openapi: 3.0.2
+
+info:
+  title: FinCore API
+  description: API for financial operations
+  version: "1.0.0"
+  contact:
+    name: Domey Benjamin
+    email: domeybenjamin1@gmail.com
+    url: https://www.linkedin.com/in/benjamin-armah-kesey-domey/
+
+servers:
+  - url: "https://fincore.fly.dev"
+    description: Production API
+  - url: "https://fincore-staging.fly.dev"
+    description: Staging API
+  - url: http://localhost:5002
+    description: Local development
+
+paths:
+  /:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: A successful response
+
+  /api/v1/clients:
+    post:
+      summary: Create a new client
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/client_post.yaml
+      responses:
+        '201':
+          description: Return the created client
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/client.yaml
+        '400':
+          description: Bad Request.
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/client_post_validate.yaml
+        '500':
+          description: Internal Server Error
+
+  /api/v1/clients/me:
+    get:
+      summary: Get the current client's information
+      responses:
+        '200':
+          description: Return the current client's information
+          headers:
+            Content-Type:
+              $ref: "#/components/headers/Content-Type"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/client.yaml
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+      tags:
+        - Auth Required
+

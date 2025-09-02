@@ -1,0 +1,11 @@
+type: object
+properties:
+  errors:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Failed validation rule 'required'
+      email:
+        type: string
+        example: Failed validation rule 'email'

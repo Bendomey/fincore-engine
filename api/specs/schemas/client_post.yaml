@@ -1,0 +1,21 @@
+type: object
+x-fc-class-name: clients.ClientPost
+properties:
+  name:
+    example: Sqorla
+    type: string
+    description: This is the name of the client.
+    minLength: 3
+    maxLength: 255
+
+  email:
+    example: sqorla@email.com
+    description: This is the email of the client.
+    type: string
+    format: email
+    minLength: 5
+    maxLength: 255
+    
+required:
+  - name
+  - email

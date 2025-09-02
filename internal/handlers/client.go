@@ -20,7 +20,7 @@ func NewClientHandler(service services.ClientService, validate *validator.Valida
 }
 
 type CreateUserRequest struct {
-	Name  string `json:"name" validate:"required,min=3,max=50"`
+	Name  string `json:"name" validate:"required,min=3,max=255"`
 	Email string `json:"email" validate:"required,email"`
 }
 
