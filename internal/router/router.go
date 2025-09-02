@@ -8,9 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 
 	"github.com/Bendomey/fincore-engine/pkg"
-	"github.com/go-chi/httprate"
 )
 
 func New(appCtx pkg.AppContext) *chi.Mux {
@@ -49,20 +49,41 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 	// health check
 	r.Use(middleware.Heartbeat("/"))
 
+	r.Route("/api", func(r chi.Router) {
+		r.Mount("/", NewClientRouter(appCtx)) // clients
+	})
+
 	// serve openapi.yaml + docs
 	r.Get("/swagger.yaml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "api/service-specs/index.yaml")
 	})
 
 	if appCtx.Config.Env != "production" {
-		r.Get("/docs/*", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, "api/swagger-ui/index.html")
+		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Swagger UI</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script>
+      window.onload = function() {
+        SwaggerUIBundle({
+          url: '/swagger.yaml',
+          dom_id: '#swagger-ui'
+        });
+      };
+    </script>
+  </body>
+</html>
+	`))
 		})
 	}
-
-	r.Route("/api", func(r chi.Router) {
-		r.Mount("/", NewClientRouter(appCtx)) // clients
-	})
 
 	return r
 }

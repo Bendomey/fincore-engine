@@ -1,4 +1,4 @@
-openapi: 3.0.2
+openapi: 3.0.3
 
 info:
   title: FinCore API
@@ -10,12 +10,12 @@ info:
     url: https://www.linkedin.com/in/benjamin-armah-kesey-domey/
 
 servers:
-  - url: "https://fincore.fly.dev"
-    description: Production API
-  - url: "https://fincore-staging.fly.dev"
-    description: Staging API
   - url: http://localhost:5002
     description: Local development
+  - url: "https://fincore-staging.fly.dev"
+    description: Staging API
+  - url: "https://fincore.fly.dev"
+    description: Production API
 
 paths:
   /:
@@ -31,8 +31,9 @@ paths:
       requestBody:
         content:
           application/json:
-            schema:
-              $ref: ./schemas/client_post.yaml
+            components:
+              schemas:
+                $ref: './schemas/client_post.yaml'
       responses:
         '201':
           description: Return the created client
@@ -50,9 +51,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ./schemas/validate/client_post_validate.yaml
+                $ref: './schemas/validate/client_post_validate.yaml'
         '500':
           description: Internal Server Error
+      tags:
+        - Client
 
   /api/v1/clients/me:
     get:
@@ -60,21 +63,17 @@ paths:
       responses:
         '200':
           description: Return the current client's information
-          headers:
-            Content-Type:
-              $ref: "#/components/headers/Content-Type"
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: ./schemas/client.yaml
+                    $ref: './schemas/client.yaml'
         '401':
           description: Unauthorized
         '500':
           description: Internal Server Error
-
       tags:
-        - Auth Required
+        - Client
 
