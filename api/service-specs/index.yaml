@@ -80,3 +80,169 @@ paths:
       tags:
         - Client
 
+  /api/v1/accounts:
+    post:
+      summary: Create a new account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/account_post.yaml
+      responses:
+        '201':
+          description: Return the created account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/account.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/account_post_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Account
+
+    get:
+      summary: List all accounts
+      parameters:
+        - $ref: ./parameters/page.yaml
+        - $ref: ./parameters/page_size.yaml
+        - $ref: ./parameters/sort.yaml
+        - $ref: ./parameters/account_type.yaml
+        - $ref: ./parameters/parent_account_id.yaml
+        - $ref: ./parameters/populate_account.yaml
+      responses:
+        '200':
+          description: Return a list of accounts with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: ./schemas/account.yaml
+                  pagination:
+                    $ref: ./schemas/common/pagination.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/account_list_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Account
+
+  /api/v1/accounts/{account_id}:
+    patch:
+      summary: Update an existing account
+      parameters:
+        - $ref: ./parameters/account_id.yaml
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/account_patch.yaml
+      responses:
+        '200':
+          description: Return the updated account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/account.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/account_patch_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Account
+    
+    delete:
+      summary: Delete an existing account
+      parameters:
+        - $ref: ./parameters/account_id.yaml
+      responses:
+        '204':
+          description: Account successfully deleted
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/account_delete_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Account
+
+    get:
+      summary: Get single account details
+      parameters:
+        - $ref: ./parameters/account_id.yaml
+      responses:
+        '200':
+          description: Return the account details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/account.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/account_get_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Account

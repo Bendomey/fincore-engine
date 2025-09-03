@@ -1,0 +1,7 @@
+name: page_size
+description: Number of items per page for pagination
+in: query
+required: false
+schema:
+  type: integer
+  default: 50

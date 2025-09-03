@@ -1,6 +1,6 @@
 type: string
 enum:
-  - asc
-  - desc
+  - ASC
+  - DESC
 description: An enumerator to determine the type of sort to return
-example: desc
+example: DESC

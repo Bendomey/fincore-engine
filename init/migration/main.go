@@ -14,6 +14,9 @@ import (
 func updateMigration(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&models.Client{},
+		&models.Account{},
+		&models.JournalEntry{},
+		&models.JournalEntryLine{},
 	)
 	return err
 }

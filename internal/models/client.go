@@ -2,8 +2,8 @@ package models
 
 type Client struct {
 	BaseModelSoftDelete
-	Name             string `json:"name"`
-	Email            string `json:"email"`
-	ClientID         string `json:"client_id"`
+	Name             string `json:"name" gorm:"not null;index"`
+	Email            string `json:"email" gorm:"not null;uniqueIndex"`
+	ClientID         string `json:"client_id" gorm:"not null;uniqueIndex"`
 	ClientSecretHash string `json:"client_secret_hash"`
 }

@@ -1,0 +1,9 @@
+type: string
+enum:
+  - EXPENSE
+  - LIABILITY
+  - EQUITY
+  - ASSET
+  - INCOME
+description: The type of the account.
+example: INCOME

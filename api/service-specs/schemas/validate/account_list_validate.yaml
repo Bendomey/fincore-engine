@@ -1,0 +1,17 @@
+type: object
+properties:
+  errors:
+    type: object
+    properties:
+      account_type:
+        type: string
+        example: Failed validation rule 'enum'
+      parent_account_id:
+        type: string
+        example: Failed validation rule 'uuid4'
+      page:
+        type: string
+        example: Failed validation rule 'integer'
+      page_size:
+        type: string
+        example: Failed validation rule 'integer'

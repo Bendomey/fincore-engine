@@ -1,0 +1,36 @@
+type: object
+x-fc-class-name: accounts.AccountPost
+properties:
+  name:
+    example: Account Receivable
+    type: string
+    description: The name of the account.
+    minLength: 3
+    maxLength: 255
+
+  type:
+    $ref: ./enums/account_type.yaml
+
+  is_contra:
+    example: true
+    type: boolean
+    description: Whether the account is a contra account.
+
+  parent_account_id:
+    example: 123e4567-e89b-12d3-a456-426614174000
+    type: string
+    description: The ID of the parent account.
+    nullable: true
+
+  description:
+    example: This account is used for tracking receivables.
+    type: string
+    description: The description of the account.
+    minLength: 3
+    maxLength: 255
+    nullable: true
+    
+required:
+  - name
+  - type
+  - is_contra

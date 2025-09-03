@@ -1,0 +1,11 @@
+name: populate
+description: Populate entities.
+in: query
+required: false
+schema:
+  type: array
+  items:
+    type: string
+    enum:
+      - account
+      - journal_entry

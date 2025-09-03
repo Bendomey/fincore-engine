@@ -1,0 +1,14 @@
+type: object
+properties:
+  errors:
+    type: object
+    properties:
+      name:
+        type: string
+        example: Failed validation rule 'required'
+      type:
+        type: string
+        example: Failed validation rule 'required'
+      is_contra:
+        type: string
+        example: Failed validation rule 'required'
