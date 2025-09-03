@@ -54,9 +54,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 	})
 
 	// serve openapi.yaml + docs
-	r.Get("/swagger.yaml", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "api/service-specs/index.yaml")
-	})
+	r.Handle("/swagger/*", http.StripPrefix("/swagger/", http.FileServer(http.Dir("./api/service-specs"))))
 
 	if appCtx.Config.Env != "production" {
 		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +63,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Swagger UI</title>
+    <title>FinCore Docs</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
   </head>
   <body>
@@ -74,7 +72,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
     <script>
       window.onload = function() {
         SwaggerUIBundle({
-          url: '/swagger.yaml',
+          url: '/swagger/index.yaml',
           dom_id: '#swagger-ui'
         });
       };

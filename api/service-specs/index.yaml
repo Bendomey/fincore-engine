@@ -31,9 +31,8 @@ paths:
       requestBody:
         content:
           application/json:
-            components:
-              schemas:
-                $ref: './schemas/client_post.yaml'
+            schema:
+              $ref: ./schemas/client_post.yaml
       responses:
         '201':
           description: Return the created client
@@ -46,12 +45,16 @@ paths:
                     $ref: ./schemas/client.yaml
         '400':
           description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
         '422':
           description: Parameter Validation errors
           content:
             application/json:
               schema:
-                $ref: './schemas/validate/client_post_validate.yaml'
+                $ref: ./schemas/validate/client_post_validate.yaml
         '500':
           description: Internal Server Error
       tags:
@@ -69,7 +72,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: './schemas/client.yaml'
+                    $ref: ./schemas/client.yaml
         '401':
           description: Unauthorized
         '500':
