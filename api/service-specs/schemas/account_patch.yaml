@@ -1,5 +1,5 @@
 type: object
-x-fc-class-name: accounts.AccountPost
+x-fc-class-name: accounts.AccountPatch
 properties:
   name:
     example: Account Receivable
