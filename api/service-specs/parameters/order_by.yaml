@@ -1,0 +1,9 @@
+name: order_by
+description: The field to order accounts by
+in: query
+required: false
+schema:
+  type: string
+  example: "created_at"
+
+  

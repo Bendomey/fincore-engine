@@ -1,0 +1,9 @@
+name: query
+description: A search query to filter results
+in: query
+required: false
+schema:
+  type: string
+  example: hello world
+
+  

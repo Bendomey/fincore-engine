@@ -1,0 +1,10 @@
+name: start_date
+description: The start date for filtering results
+in: query
+required: false
+schema:
+  format: date-time
+  type: string
+  example: "2023-01-01T00:00:00Z"
+
+  

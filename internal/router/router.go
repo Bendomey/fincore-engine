@@ -49,8 +49,10 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 	// health check
 	r.Use(middleware.Heartbeat("/"))
 
-	r.Route("/api", func(r chi.Router) {
-		r.Mount("/", NewClientRouter(appCtx)) // clients
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Mount("/clients", NewClientRouter(appCtx))   // clients
+		r.Mount("/accounts", NewAccountRouter(appCtx)) // accounts
+		// r.Mount("/journal-entry", NewJournalEntryRouter(appCtx))    // journalentry
 	})
 
 	// serve openapi.yaml + docs

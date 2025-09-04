@@ -19,13 +19,13 @@ func NewClientHandler(service services.ClientService, validate *validator.Valida
 	return ClientHandler{service, validate}
 }
 
-type CreateUserRequest struct {
+type CreateClientRequest struct {
 	Name  string `json:"name" validate:"required,min=3,max=255"`
 	Email string `json:"email" validate:"required,email"`
 }
 
 func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
-	var body CreateUserRequest
+	var body CreateClientRequest
 	if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 		return

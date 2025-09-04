@@ -1,0 +1,6 @@
+type: string
+enum:
+  - asc
+  - desc
+description: An enumerator to determine the type of order to return
+example: desc

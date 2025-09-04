@@ -6,11 +6,14 @@ import (
 )
 
 type Handlers struct {
-	ClientHandler ClientHandler
+	ClientHandler  ClientHandler
+	AccountHandler AccountHandler
 }
 
 func NewHandlers(services services.Services, validate *validator.Validate) Handlers {
 
 	clientHandler := NewClientHandler(services.ClientService, validate)
-	return Handlers{ClientHandler: clientHandler}
+	accountHandler := NewAccountHandler(services.AccountService, validate)
+
+	return Handlers{ClientHandler: clientHandler, AccountHandler: accountHandler}
 }

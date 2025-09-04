@@ -1,0 +1,10 @@
+name: is_contra
+description: Filter accounts by whether they are contra accounts
+in: query
+required: false
+schema:
+  format: boolean
+  type: string
+  example: true
+
+  

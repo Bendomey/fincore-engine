@@ -1,0 +1,9 @@
+name: search_fields
+description: A comma-separated list of fields to search in
+in: query
+required: false
+schema:
+  type: string
+  example: "name,email"
+
+  

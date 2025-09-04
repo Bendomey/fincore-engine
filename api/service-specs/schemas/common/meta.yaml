@@ -1,0 +1,26 @@
+type: object
+properties:
+  errors:
+    type: object
+    properties:
+      page:
+        type: integer
+        example: 1
+      page_size:
+        type: integer
+        example: 10
+      order:
+        type: string
+        example: asc
+      order_by:
+        type: string
+        example: created_at
+      total:
+        type: integer
+        example: 100
+      has_next_page:
+        type: boolean
+        example: true
+      has_previous_page:
+        type: boolean
+        example: false

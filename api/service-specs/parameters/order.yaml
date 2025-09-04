@@ -1,0 +1,7 @@
+name: order
+description: Change default order behavior
+in: query
+required: false
+schema:
+  $ref: ../schemas/enums/order_type.yaml
+

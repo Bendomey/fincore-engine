@@ -120,10 +120,16 @@ paths:
       parameters:
         - $ref: ./parameters/page.yaml
         - $ref: ./parameters/page_size.yaml
-        - $ref: ./parameters/sort.yaml
+        - $ref: ./parameters/order.yaml
+        - $ref: ./parameters/order_by.yaml
+        - $ref: ./parameters/query.yaml
+        - $ref: ./parameters/search_fields.yaml
+        - $ref: ./parameters/start_date.yaml
+        - $ref: ./parameters/end_date.yaml
+        - $ref: ./parameters/populate_account.yaml
+        - $ref: ./parameters/is_contra.yaml
         - $ref: ./parameters/account_type.yaml
         - $ref: ./parameters/parent_account_id.yaml
-        - $ref: ./parameters/populate_account.yaml
       responses:
         '200':
           description: Return a list of accounts with pagination info
@@ -136,8 +142,8 @@ paths:
                     type: array
                     items:
                       $ref: ./schemas/account.yaml
-                  pagination:
-                    $ref: ./schemas/common/pagination.yaml
+                  meta:
+                    $ref: ./schemas/common/meta.yaml
         '400':
           description: Bad Request.
           content:
