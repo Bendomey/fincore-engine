@@ -9,7 +9,7 @@ import (
 type JournalEntry struct {
 	BaseModelSoftDelete
 	ClientID string `json:"client_id" gorm:"not null;index;"`
-	Client   Client `json:"client" gorm:"foreignKey:ID;references:ClientID"`
+	Client   Client `json:"client" gorm:"foreignKey:ClientID;references:ID"`
 
 	Reference       string    `json:"reference" gorm:"not null;"`
 	TransactionID   *string   `json:"transaction_id"`
