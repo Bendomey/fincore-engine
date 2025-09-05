@@ -5,7 +5,7 @@ import (
 )
 
 // DBJournalEntryLineToRestJournalEntryLine transforms journal_entry_line db input to rest type
-func DBJournalEntryLineToRestJournalEntryLine(i *models.JournalEntryLine) interface{} {
+func DBJournalEntryLineToRestJournalEntryLine(i *models.JournalEntryLine, populate *[]string) interface{} {
 	if i == nil {
 		return nil
 	}
@@ -15,7 +15,7 @@ func DBJournalEntryLineToRestJournalEntryLine(i *models.JournalEntryLine) interf
 		"journal_entry_id": i.JournalEntryID,
 		"journal_entry":    DBJournalEntryToRestJournalEntry(&i.JournalEntry),
 		"account_id":       i.AccountID,
-		"account":          DBAccountToRestAccount(&i.Account),
+		"account":          DBAccountToRestAccount(&i.Account, populate),
 		"debit":            i.Debit,
 		"credit":           i.Credit,
 		"notes":            i.Notes,

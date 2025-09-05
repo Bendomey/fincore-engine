@@ -45,6 +45,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(appMiddleware.EnforceContentType("application/json"))
 
 	// health check
 	r.Use(middleware.Heartbeat("/"))

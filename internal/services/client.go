@@ -112,7 +112,7 @@ func (s *clientService) CreateClient(ctx context.Context, input CreateUserInput)
 	client := &models.Client{
 		Name:             input.Name,
 		Email:            input.Email,
-		ClientID:         clientID,
+		ClientId:         clientID,
 		ClientSecretHash: string(hash),
 	}
 

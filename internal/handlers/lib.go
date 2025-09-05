@@ -16,11 +16,3 @@ func getPopulateFields(r *http.Request) *[]string {
 
 	return populateFields
 }
-
-func nullOrData(input string) any {
-	if input == "" {
-		return nil
-	}
-
-	return input
-}

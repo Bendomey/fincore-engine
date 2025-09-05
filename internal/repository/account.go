@@ -36,7 +36,21 @@ func (r *accountRepository) Update(ctx context.Context, account *models.Account)
 }
 
 func (r *accountRepository) Delete(ctx context.Context, id string) error {
-	return r.DB.WithContext(ctx).Delete(&models.Account{}, id).Error
+	var account models.Account
+	if err := r.DB.WithContext(ctx).Where("id = ?", id).First(&account).Error; err != nil {
+		return err
+	}
+
+	return r.DB.WithContext(ctx).Delete(&account).Error
+}
+
+func (r *accountRepository) GetByCode(ctx context.Context, code string) (*models.Account, error) {
+	var account models.Account
+	result := r.DB.WithContext(ctx).Where("code = ?", code).First(&account)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &account, nil
 }
 
 func (r *accountRepository) GetByID(ctx context.Context, id string, populate *[]string) (*models.Account, error) {
@@ -49,7 +63,7 @@ func (r *accountRepository) GetByID(ctx context.Context, id string, populate *[]
 		}
 	}
 
-	result := db.First(&account, id)
+	result := db.Where("id = ?", id).First(&account)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -63,6 +77,7 @@ type ListAccountsFilter struct {
 	ParentAccountId *string
 	AccountType     *string
 	IsContra        *bool
+	IsGroup         *bool
 }
 
 func (r *accountRepository) List(ctx context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (*[]models.Account, error) {
@@ -75,8 +90,11 @@ func (r *accountRepository) List(ctx context.Context, filterQuery lib.FilterQuer
 			ParentAccountFilterScope(filters.ParentAccountId),
 			AccountTypeFilterScope(filters.AccountType),
 			IsContraFilterScope(filters.IsContra),
+			IsGroupFilterScope(filters.IsContra),
 			SearchScope("accounts", filterQuery.Search),
+
 			PaginationScope(filterQuery.Page, filterQuery.PageSize),
+			OrderScope("accounts", filterQuery.OrderBy, filterQuery.Order),
 		)
 
 	if filterQuery.Populate != nil {
@@ -106,6 +124,7 @@ func (r *accountRepository) Count(ctx context.Context, filterQuery lib.FilterQue
 			ParentAccountFilterScope(filters.ParentAccountId),
 			AccountTypeFilterScope(filters.AccountType),
 			IsContraFilterScope(filters.IsContra),
+			IsGroupFilterScope(filters.IsContra),
 			SearchScope("accounts", filterQuery.Search),
 		).
 		Count(&count)
@@ -115,6 +134,16 @@ func (r *accountRepository) Count(ctx context.Context, filterQuery lib.FilterQue
 	}
 
 	return count, nil
+}
+
+func IsGroupFilterScope(isGroup *bool) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if isGroup == nil {
+			return db
+		}
+
+		return db.Where("accounts.is_group = ?", *isGroup)
+	}
 }
 
 func IsContraFilterScope(isContra *bool) func(db *gorm.DB) *gorm.DB {

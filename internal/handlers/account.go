@@ -8,6 +8,7 @@ import (
 	"github.com/Bendomey/fincore-engine/internal/repository"
 	"github.com/Bendomey/fincore-engine/internal/services"
 	"github.com/Bendomey/fincore-engine/internal/transformations"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -23,7 +24,8 @@ func NewAccountHandler(service services.AccountService, validate *validator.Vali
 type CreateAccountRequest struct {
 	Name            string  `json:"name" validate:"required,min=3,max=255"`
 	Type            string  `json:"type" validate:"required,oneof=EXPENSE LIABILITY EQUITY ASSET INCOME"`
-	IsContra        bool    `json:"is_contra" validate:"required"`
+	IsContra        bool    `json:"is_contra" validate:"boolean"`
+	IsGroup         bool    `json:"is_group" validate:"boolean"`
 	ParentAccountID *string `json:"parent_account_id" validate:"omitempty,uuid4"`
 	Description     *string `json:"description" validate:"omitempty,max=1024"`
 }
@@ -52,6 +54,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		Name:            body.Name,
 		AccountType:     body.Type,
 		IsContra:        body.IsContra,
+		IsGroup:         body.IsGroup,
 		ParentAccountID: body.ParentAccountID,
 		Description:     body.Description,
 		ClientID:        client.ID.String(),
@@ -69,15 +72,13 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]any{
-		"data": transformations.DBAccountToRestAccount(account),
+		"data": transformations.DBAccountToRestAccount(account, nil),
 	})
 }
 
 type UpdateAccountRequest struct {
-	Name            *string `json:"name" validate:"omitempty,min=3,max=255"`
-	IsContra        *bool   `json:"is_contra" validate:"omitempty"`
-	ParentAccountID *string `json:"parent_account_id" validate:"omitempty,uuid4"`
-	Description     *string `json:"description" validate:"omitempty,max=1024"`
+	Name        *string `json:"name" validate:"omitempty,min=3,max=255"`
+	Description *string `json:"description" validate:"omitempty,max=1024"`
 }
 
 func (h *AccountHandler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
@@ -93,11 +94,9 @@ func (h *AccountHandler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.service.UpdateAccount(r.Context(), r.URL.Query().Get("account_id"), services.UpdateAccountInput{
-		Name:            body.Name,
-		IsContra:        body.IsContra,
-		ParentAccountID: body.ParentAccountID,
-		Description:     body.Description,
+	account, err := h.service.UpdateAccount(r.Context(), chi.URLParam(r, "account_id"), services.UpdateAccountInput{
+		Name:        body.Name,
+		Description: body.Description,
 	})
 
 	if err != nil {
@@ -112,12 +111,12 @@ func (h *AccountHandler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"data": transformations.DBAccountToRestAccount(account),
+		"data": transformations.DBAccountToRestAccount(account, nil),
 	})
 }
 
 func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	err := h.service.DeleteAccount(r.Context(), r.URL.Query().Get("account_id"))
+	err := h.service.DeleteAccount(r.Context(), chi.URLParam(r, "account_id"))
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -135,12 +134,12 @@ func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 type GetAccountRequest struct {
 	ID       string    `json:"name" validate:"required,uuid4"`
-	Populate *[]string `json:"populate" validate:"omitempty,dive,oneof=parent_account"`
+	Populate *[]string `json:"populate" validate:"omitempty,dive,oneof=ParentAccount"`
 }
 
 func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	input := GetAccountRequest{
-		ID:       r.URL.Query().Get("account_id"),
+		ID:       chi.URLParam(r, "account_id"),
 		Populate: getPopulateFields(r),
 	}
 
@@ -164,7 +163,7 @@ func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]any{
-		"data": transformations.DBAccountToRestAccount(account),
+		"data": transformations.DBAccountToRestAccount(account, input.Populate),
 	})
 }
 
@@ -173,6 +172,7 @@ type ListAccountsFilterRequest struct {
 	ParentAccountID *string `json:"parent_account_id" validate:"omitempty,uuid4"`
 	AccountType     *string `json:"account_type" validate:"omitempty,oneof=EXPENSE LIABILITY EQUITY ASSET INCOME"`
 	IsContra        *string `json:"is_contra" validate:"omitempty,boolean"`
+	IsGroup         *string `json:"is_group" validate:"omitempty,boolean"`
 }
 
 func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
@@ -185,9 +185,10 @@ func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 
 	filters := ListAccountsFilterRequest{
 		ClientID:        client.ID.String(),
-		ParentAccountID: nullOrData(r.URL.Query().Get("parent_account_id")).(*string),
-		AccountType:     nullOrData(r.URL.Query().Get("account_type")).(*string),
-		IsContra:        nullOrData(r.URL.Query().Get("is_contra")).(*string),
+		ParentAccountID: lib.NullOrString(r.URL.Query().Get("parent_account_id")),
+		AccountType:     lib.NullOrString(r.URL.Query().Get("account_type")),
+		IsContra:        lib.NullOrString(r.URL.Query().Get("is_contra")),
+		IsGroup:         lib.NullOrString(r.URL.Query().Get("is_group")),
 	}
 
 	isFiltersPassedValidation := lib.ValidateRequest(h.validate, filters, w)
@@ -216,6 +217,7 @@ func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 		ParentAccountId: filters.ParentAccountID,
 		AccountType:     filters.AccountType,
 		IsContra:        lib.ConvertStringPointerToBoolPointer(filters.IsContra),
+		IsGroup:         lib.ConvertStringPointerToBoolPointer(filters.IsGroup),
 	})
 
 	if accountsErr != nil {
@@ -233,6 +235,7 @@ func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 		ParentAccountId: filters.ParentAccountID,
 		AccountType:     filters.AccountType,
 		IsContra:        lib.ConvertStringPointerToBoolPointer(filters.IsContra),
+		IsGroup:         lib.ConvertStringPointerToBoolPointer(filters.IsGroup),
 	})
 
 	if countsErr != nil {
@@ -247,7 +250,7 @@ func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 
 	accountsTransformed := make([]interface{}, 0)
 	for _, account := range accounts {
-		accountsTransformed = append(accountsTransformed, transformations.DBAccountToRestAccount(&account))
+		accountsTransformed = append(accountsTransformed, transformations.DBAccountToRestAccount(&account, filterQuery.Populate))
 	}
 
 	w.WriteHeader(http.StatusOK)

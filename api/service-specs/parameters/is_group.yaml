@@ -1,0 +1,10 @@
+name: is_group
+description: Filter accounts by whether they are group accounts
+in: query
+required: false
+schema:
+  format: boolean
+  type: string
+  example: true
+
+  

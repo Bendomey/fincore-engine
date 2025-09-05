@@ -19,3 +19,11 @@ func ConvertStringPointerToBoolPointer(boolToBecome *string) *bool {
 	conv := *boolToBecome == "true" || *boolToBecome == "1"
 	return &conv
 }
+
+func NullOrString(input string) *string {
+	if input == "" {
+		return nil
+	}
+
+	return &input
+}

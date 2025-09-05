@@ -5,7 +5,7 @@ import (
 )
 
 // DBAccountToRestAccount transforms account db input to rest type
-func DBAccountToRestAccount(i *models.Account) interface{} {
+func DBAccountToRestAccount(i *models.Account, populate *[]string) interface{} {
 	if i == nil {
 		return nil
 	}
@@ -17,10 +17,19 @@ func DBAccountToRestAccount(i *models.Account) interface{} {
 		"description":       i.Description,
 		"type":              i.Type,
 		"is_contra":         i.IsContra,
+		"is_group":          i.IsGroup,
 		"parent_account_id": i.ParentAccountID,
-		"parent_account":    DBAccountToRestAccount(i.ParentAccount),
 		"created_at":        i.CreatedAt,
 		"updated_at":        i.UpdatedAt,
+	}
+
+	if populate != nil {
+		for _, field := range *populate {
+			switch field {
+			case "ParentAccount":
+				data["parent_account"] = DBAccountToRestAccount(i.ParentAccount, populate)
+			}
+		}
 	}
 
 	return data

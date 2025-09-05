@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/Bendomey/fincore-engine/internal/lib"
 	"github.com/Bendomey/fincore-engine/internal/models"
@@ -29,6 +31,7 @@ type CreateAccountInput struct {
 	Name        string
 	AccountType string
 	IsContra    bool
+	IsGroup     bool
 	ClientID    string
 
 	ParentAccountID *string
@@ -36,12 +39,37 @@ type CreateAccountInput struct {
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, input CreateAccountInput) (*models.Account, error) {
-	// TODO: create code.
+
+	if input.IsGroup {
+		if input.ParentAccountID != nil {
+			return nil, errors.New("Cannot set parent account for a group account")
+		}
+	}
+
+	if input.ParentAccountID != nil {
+
+		parentAccount, parentAccountErr := s.repo.GetByID(ctx, *input.ParentAccountID, nil)
+		if parentAccountErr != nil {
+			return nil, parentAccountErr
+		}
+
+		if !parentAccount.IsGroup {
+			return nil, errors.New("Parent account must be a group account")
+		}
+
+	}
+
+	code, codeErr := GenerateAccountCode(s.repo, input.AccountType)
+	if codeErr != nil {
+		return nil, codeErr
+	}
 
 	account := &models.Account{
+		Code:            *code,
 		Name:            input.Name,
 		Type:            input.AccountType,
 		IsContra:        input.IsContra,
+		IsGroup:         input.IsGroup,
 		ParentAccountID: input.ParentAccountID,
 		ClientID:        input.ClientID,
 		Description:     input.Description,
@@ -55,11 +83,56 @@ func (s *accountService) CreateAccount(ctx context.Context, input CreateAccountI
 	return account, nil
 }
 
+func GenerateAccountCode(repo repository.AccountRepository, accountType string) (*string, error) {
+	generatedCode := "1000"
+	switch accountType {
+	case "ASSET":
+		generatedCode = "1000"
+	case "LIABILITY":
+		generatedCode = "2000"
+	case "EQUITY":
+		generatedCode = "3000"
+	case "INCOME":
+		generatedCode = "4000"
+	case "EXPENSE":
+		generatedCode = "5000"
+	default:
+		return nil, errors.New("invalid account type")
+	}
+
+	accounts, err := repo.List(context.Background(), lib.FilterQuery{
+		Page:     1,
+		PageSize: 1,
+		Order:    "desc",
+		OrderBy:  "created_at",
+	}, repository.ListAccountsFilter{
+		AccountType: &accountType,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(*accounts) > 0 {
+		lastAccount := (*accounts)[0]
+
+		// Increment the last account code by 1
+		// This assumes that the account codes are numeric strings
+		var lastCodeInt int
+		_, scanErr := fmt.Sscanf(lastAccount.Code, "%d", &lastCodeInt)
+		if scanErr != nil {
+			return nil, errors.New("failed to parse last account code")
+		}
+
+		generatedCode = fmt.Sprintf("%d", lastCodeInt+1)
+	}
+
+	return &generatedCode, nil
+}
+
 type UpdateAccountInput struct {
-	Name            *string
-	IsContra        *bool
-	ParentAccountID *string
-	Description     *string
+	Name        *string
+	Description *string
 }
 
 func (s *accountService) UpdateAccount(ctx context.Context, accountId string, input UpdateAccountInput) (*models.Account, error) {
@@ -72,11 +145,6 @@ func (s *accountService) UpdateAccount(ctx context.Context, accountId string, in
 		account.Name = *input.Name
 	}
 
-	if input.IsContra != nil {
-		account.IsContra = *input.IsContra
-	}
-
-	account.ParentAccountID = input.ParentAccountID
 	account.Description = input.Description
 
 	err = s.repo.Update(ctx, account)
@@ -89,11 +157,6 @@ func (s *accountService) UpdateAccount(ctx context.Context, accountId string, in
 }
 
 func (s *accountService) DeleteAccount(ctx context.Context, accountId string) error {
-	_, err := s.repo.GetByID(ctx, accountId, nil)
-	if err != nil {
-		return err
-	}
-
 	return s.repo.Delete(ctx, accountId)
 }
 

@@ -12,9 +12,9 @@ type FilterQuery struct {
 	PageSize  int            `json:"page_size" validate:"gte=0"`
 	Order     string         `json:"order" validate:"omitempty,oneof=asc desc"`
 	OrderBy   string         `json:"order_by" validate:"omitempty"`
-	Search    *Search        `json:"search" validate:"omitempty,dive"`
-	DateRange *DateRangeType `json:"date_range" validate:"omitempty,dive"`
-	Populate  *[]string      `json:"populate" validate:"omitempty,dive"`
+	Search    *Search        `json:"search" validate:"omitempty"`
+	DateRange *DateRangeType `json:"date_range" validate:"omitempty"`
+	Populate  *[]string      `json:"populate" validate:"omitempty"`
 }
 
 // DateRangeType
@@ -25,21 +25,13 @@ type DateRangeType struct {
 
 // Search
 type Search struct {
-	Criteria     string   `json:"criteria" validate:"required"`
-	SearchFields []string `json:"search_fields" validate:"required,min=1,dive,required"`
+	Query        string   `json:"query" validate:"required"`
+	SearchFields []string `json:"search_fields" validate:"required,min=1"`
 }
 
 // GenerateQuery takes a loook at what is coming from client and then generates a sieve
 func GenerateQuery(argument url.Values) (*FilterQuery, error) {
-	filterResult := FilterQuery{
-		Page:      1,
-		PageSize:  10,
-		Order:     "desc",
-		OrderBy:   "created_at",
-		Search:    nil,
-		DateRange: nil,
-		Populate:  nil,
-	}
+	filterResult := GenerateEmptyQuery()
 
 	page := argument.Get("page")
 	if page != "" {
@@ -57,7 +49,10 @@ func GenerateQuery(argument url.Values) (*FilterQuery, error) {
 		if err != nil {
 			return nil, err
 		}
-		filterResult.PageSize = pageSize
+
+		if pageSize > 0 {
+			filterResult.PageSize = pageSize
+		}
 	}
 
 	//order
@@ -100,7 +95,7 @@ func GenerateQuery(argument url.Values) (*FilterQuery, error) {
 		fields := strings.Split(searchFields, ",")
 
 		filterResult.Search = &Search{
-			Criteria:     query,
+			Query:        query,
 			SearchFields: fields,
 		}
 	}
@@ -113,4 +108,16 @@ func GenerateQuery(argument url.Values) (*FilterQuery, error) {
 	}
 
 	return &filterResult, nil
+}
+
+func GenerateEmptyQuery() FilterQuery {
+	return FilterQuery{
+		Page:      1,
+		PageSize:  10,
+		Order:     "desc",
+		OrderBy:   "created_at",
+		Search:    nil,
+		DateRange: nil,
+		Populate:  nil,
+	}
 }

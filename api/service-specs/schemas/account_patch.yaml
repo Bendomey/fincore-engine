@@ -9,18 +9,6 @@ properties:
     maxLength: 255
     nullable: true
 
-  is_contra:
-    example: true
-    type: boolean
-    description: Whether the account is a contra account.
-    nullable: true
-
-  parent_account_id:
-    example: 123e4567-e89b-12d3-a456-426614174000
-    type: string
-    description: The ID of the parent account.
-    nullable: true
-
   description:
     example: This account is used for tracking receivables.
     type: string

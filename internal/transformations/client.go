@@ -14,7 +14,7 @@ func DBClientToRestClient(i *models.Client, secret *string) interface{} {
 		"id":         i.ID.String(),
 		"name":       i.Name,
 		"email":      i.Email,
-		"client_id":  i.ClientID,
+		"client_id":  i.ClientId,
 		"created_at": i.CreatedAt,
 		"updated_at": i.UpdatedAt,
 	}

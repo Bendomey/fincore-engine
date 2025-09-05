@@ -20,19 +20,19 @@ func DateRangeScope(tableName string, dateRange *lib.DateRangeType) func(db *gor
 
 func SearchScope(tableName string, search *lib.Search) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if search == nil || search.Criteria == "" {
+		if search == nil || search.Query == "" {
 			return db
 		}
 
 		results := db
 
-		for index, singleCriteria := range search.SearchFields {
+		for index, singleQuery := range search.SearchFields {
 			if index == 0 {
-				results = results.Where(fmt.Sprintf("%s.%s ILIKE ?", tableName, singleCriteria), fmt.Sprintf("%%%s%%", search.Criteria))
+				results = results.Where(fmt.Sprintf("%s.%s ILIKE ?", tableName, singleQuery), fmt.Sprintf("%%%s%%", search.Query))
 				continue
 			}
 
-			results = results.Or(fmt.Sprintf("%s.%s ILIKE ?", tableName, singleCriteria), fmt.Sprintf("%%%s%%", search.Criteria))
+			results = results.Or(fmt.Sprintf("%s.%s ILIKE ?", tableName, singleQuery), fmt.Sprintf("%%%s%%", search.Query))
 		}
 
 		return results
@@ -50,6 +50,16 @@ func PaginationScope(page int, pageSize int) func(db *gorm.DB) *gorm.DB {
 
 		offset := (page - 1) * pageSize
 		return db.Offset(offset).Limit(pageSize)
+	}
+}
+
+func OrderScope(tableName string, orderBy string, order string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if orderBy == "" || order == "" {
+			return db.Order(fmt.Sprintf("%s.created_at desc", tableName))
+		}
+
+		return db.Order(fmt.Sprintf("%s %s", orderBy, order))
 	}
 }
 

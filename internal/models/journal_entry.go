@@ -19,4 +19,6 @@ type JournalEntry struct {
 	TotalCredit int64 `json:"total_credit" gorm:"not null; default: 0"`
 
 	Metadata *datatypes.JSON `json:"metadata"` // save any client related data.
+
+	JournalEntryLines []JournalEntryLine `json:"journal_entry_lines" gorm:"foreignKey:JournalEntryID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

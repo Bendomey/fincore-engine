@@ -43,7 +43,7 @@ func (r *clientRepository) GetByClientEmail(ctx context.Context, email string) (
 
 func (r *clientRepository) GetByID(ctx context.Context, id string) (*models.Client, error) {
 	var client models.Client
-	result := r.DB.WithContext(ctx).First(&client, id)
+	result := r.DB.WithContext(ctx).Where("id = ?", id).First(&client)
 	if result.Error != nil {
 		return nil, result.Error
 	}

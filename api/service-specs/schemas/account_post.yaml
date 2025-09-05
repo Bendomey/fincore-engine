@@ -16,6 +16,11 @@ properties:
     type: boolean
     description: Whether the account is a contra account.
 
+  is_group:
+    example: false
+    type: boolean
+    description: Whether the account is a group account.
+
   parent_account_id:
     example: 123e4567-e89b-12d3-a456-426614174000
     type: string
@@ -34,3 +39,4 @@ required:
   - name
   - type
   - is_contra
+  - is_group

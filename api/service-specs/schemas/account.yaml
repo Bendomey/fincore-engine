@@ -24,6 +24,11 @@ properties:
     type: boolean
     description: Whether the account is a contra account.
     nullable: false
+  is_group:
+    example: false
+    type: boolean
+    description: Whether the account is a group account.
+    nullable: false
   description:
     example: This account is used for tracking receivables.
     type: string

@@ -128,6 +128,7 @@ paths:
         - $ref: ./parameters/end_date.yaml
         - $ref: ./parameters/populate_account.yaml
         - $ref: ./parameters/is_contra.yaml
+        - $ref: ./parameters/is_group.yaml
         - $ref: ./parameters/account_type.yaml
         - $ref: ./parameters/parent_account_id.yaml
       responses:
@@ -226,6 +227,7 @@ paths:
       summary: Get single account details
       parameters:
         - $ref: ./parameters/account_id.yaml
+        - $ref: ./parameters/populate_account.yaml
       responses:
         '200':
           description: Return the account details
