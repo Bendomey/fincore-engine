@@ -116,7 +116,17 @@ func (h *AccountHandler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	err := h.service.DeleteAccount(r.Context(), chi.URLParam(r, "account_id"))
+	client, clientOk := lib.ClientFromContext(r.Context())
+
+	if !clientOk {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err := h.service.DeleteAccount(r.Context(), services.DeleteAccountInput{
+		ClientID: client.ID.String(),
+		ID:       chi.URLParam(r, "account_id"),
+	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -133,12 +143,21 @@ func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 type GetAccountRequest struct {
+	ClientID string    `json:"client_id" validate:"required,uuid4"`
 	ID       string    `json:"name" validate:"required,uuid4"`
 	Populate *[]string `json:"populate" validate:"omitempty,dive,oneof=ParentAccount"`
 }
 
 func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
+	client, clientOk := lib.ClientFromContext(r.Context())
+
+	if !clientOk {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	input := GetAccountRequest{
+		ClientID: client.ID.String(),
 		ID:       chi.URLParam(r, "account_id"),
 		Populate: getPopulateFields(r),
 	}
@@ -149,7 +168,11 @@ func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.service.GetAccount(r.Context(), input.ID, input.Populate)
+	account, err := h.service.GetAccount(r.Context(), services.GetAccountInput{
+		ClientID: input.ClientID,
+		ID:       input.ID,
+		Populate: input.Populate,
+	})
 
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

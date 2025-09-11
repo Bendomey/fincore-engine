@@ -12,8 +12,10 @@ import (
 type AccountRepository interface {
 	Create(context context.Context, account *models.Account) error
 	Update(context context.Context, account *models.Account) error
-	Delete(context context.Context, id string) error
+	Delete(context context.Context, account *models.Account) error
+	FindAndDelete(context context.Context, id string) error
 	GetByID(context context.Context, id string, populate *[]string) (*models.Account, error)
+	GetByIDAndClientID(ctx context.Context, id string, clientID string, populate *[]string) (*models.Account, error)
 	List(context context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (*[]models.Account, error)
 	Count(context context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (int64, error)
 }
@@ -35,7 +37,11 @@ func (r *accountRepository) Update(ctx context.Context, account *models.Account)
 	return r.DB.WithContext(ctx).Save(account).Error
 }
 
-func (r *accountRepository) Delete(ctx context.Context, id string) error {
+func (r *accountRepository) Delete(ctx context.Context, account *models.Account) error {
+	return r.DB.WithContext(ctx).Delete(account).Error
+}
+
+func (r *accountRepository) FindAndDelete(ctx context.Context, id string) error {
 	var account models.Account
 	if err := r.DB.WithContext(ctx).Where("id = ?", id).First(&account).Error; err != nil {
 		return err
@@ -64,6 +70,25 @@ func (r *accountRepository) GetByID(ctx context.Context, id string, populate *[]
 	}
 
 	result := db.Where("id = ?", id).First(&account)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &account, nil
+}
+
+func (r *accountRepository) GetByIDAndClientID(ctx context.Context, id string, clientID string, populate *[]string) (*models.Account, error) {
+	var account models.Account
+	db := r.DB.WithContext(ctx)
+
+	if populate != nil {
+		for _, field := range *populate {
+			db = db.Preload(field)
+		}
+	}
+
+	result := db.Where("id = ? AND client_id = ?", id, clientID).First(&account)
 
 	if result.Error != nil {
 		return nil, result.Error

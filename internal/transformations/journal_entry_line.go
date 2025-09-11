@@ -13,14 +13,23 @@ func DBJournalEntryLineToRestJournalEntryLine(i *models.JournalEntryLine, popula
 	data := map[string]interface{}{
 		"id":               i.ID.String(),
 		"journal_entry_id": i.JournalEntryID,
-		"journal_entry":    DBJournalEntryToRestJournalEntry(&i.JournalEntry),
 		"account_id":       i.AccountID,
-		"account":          DBAccountToRestAccount(&i.Account, populate),
 		"debit":            i.Debit,
 		"credit":           i.Credit,
 		"notes":            i.Notes,
 		"created_at":       i.CreatedAt,
 		"updated_at":       i.UpdatedAt,
+	}
+
+	if populate != nil {
+		for _, field := range *populate {
+			switch field {
+			case "Account":
+				data["account"] = DBAccountToRestAccount(&i.Account, populate)
+			case "JournalEntry":
+				data["journal_entry"] = DBJournalEntryToRestJournalEntry(&i.JournalEntry, populate)
+			}
+		}
 	}
 
 	return data

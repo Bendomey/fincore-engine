@@ -8,7 +8,7 @@ type JournalEntryLine struct {
 	AccountID string  `json:"account_id" gorm:"not null;index;"`
 	Account   Account `json:"account" gorm:"foreignKey:AccountID;references:ID"`
 
-	Notes  *string `json:"reference"`
+	Notes  *string `json:"notes"`
 	Debit  int64   `json:"debit" gorm:"not null; default: 0"`
 	Credit int64   `json:"credit" gorm:"not null; default: 0"`
 }

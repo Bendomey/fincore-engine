@@ -13,8 +13,8 @@ import (
 type AccountService interface {
 	CreateAccount(ctx context.Context, input CreateAccountInput) (*models.Account, error)
 	UpdateAccount(ctx context.Context, accountId string, input UpdateAccountInput) (*models.Account, error)
-	DeleteAccount(ctx context.Context, accountId string) error
-	GetAccount(ctx context.Context, accountId string, populate *[]string) (*models.Account, error)
+	DeleteAccount(ctx context.Context, input DeleteAccountInput) error
+	GetAccount(ctx context.Context, input GetAccountInput) (*models.Account, error)
 	ListAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) ([]models.Account, error)
 	CountAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) (int64, error)
 }
@@ -156,12 +156,33 @@ func (s *accountService) UpdateAccount(ctx context.Context, accountId string, in
 	return account, nil
 }
 
-func (s *accountService) DeleteAccount(ctx context.Context, accountId string) error {
-	return s.repo.Delete(ctx, accountId)
+type DeleteAccountInput struct {
+	ClientID string
+	ID       string
 }
 
-func (s *accountService) GetAccount(ctx context.Context, accountId string, populate *[]string) (*models.Account, error) {
-	return s.repo.GetByID(ctx, accountId, populate)
+func (s *accountService) DeleteAccount(ctx context.Context, input DeleteAccountInput) error {
+	account, err := s.repo.GetByIDAndClientID(ctx, input.ID, input.ClientID, nil)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.Delete(ctx, account)
+}
+
+type GetAccountInput struct {
+	ClientID string
+	ID       string
+	Populate *[]string
+}
+
+func (s *accountService) GetAccount(ctx context.Context, input GetAccountInput) (*models.Account, error) {
+	account, err := s.repo.GetByIDAndClientID(ctx, input.ID, input.ClientID, input.Populate)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }
 
 func (s *accountService) ListAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) ([]models.Account, error) {
