@@ -254,3 +254,195 @@ paths:
           description: Internal Server Error
       tags:
         - Account
+
+  /api/v1/journal-entries:
+    post:
+      summary: Create a new journal entry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/journal_entry_post.yaml
+      responses:
+        '201':
+          description: Return the created journal entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/journal_entry.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/journal_entry_post_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Journal Entry
+
+    get:
+      summary: List all journal entries
+      parameters:
+        - $ref: ./parameters/page.yaml
+        - $ref: ./parameters/page_size.yaml
+        - $ref: ./parameters/order.yaml
+        - $ref: ./parameters/order_by.yaml
+        - $ref: ./parameters/query.yaml
+        - $ref: ./parameters/search_fields.yaml
+        - $ref: ./parameters/start_date.yaml
+        - $ref: ./parameters/end_date.yaml
+        - $ref: ./parameters/populate_journal_account.yaml
+        - $ref: ./parameters/journal_entry_status.yaml
+      responses:
+        '200':
+          description: Return a list of journal entries with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: ./schemas/journal_entry.yaml
+                  meta:
+                    $ref: ./schemas/common/meta.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/journal_entry_list_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Journal Entry
+
+  /api/v1/journal-entries/{journal_entry_id}:
+    patch:
+      summary: Update an existing journal entry
+      parameters:
+        - $ref: ./parameters/journal_entry_id.yaml
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/journal_entry_patch.yaml
+      responses:
+        '200':
+          description: Return the updated journal entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/journal_entry.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/journal_entry_patch_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Journal Entry
+
+    delete:
+      summary: Delete an existing journal entry
+      parameters:
+        - $ref: ./parameters/journal_entry_id.yaml
+      responses:
+        '204':
+          description: Journal entry successfully deleted
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Journal Entry
+
+    get:
+      summary: Get single journal entry details
+      parameters:
+        - $ref: ./parameters/journal_entry_id.yaml
+        - $ref: ./parameters/populate_journal_entry.yaml
+      responses:
+        '200':
+          description: Return the journal entry details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/journal_entry.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '422':
+          description: Parameter Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/validate/journal_entry_get_validate.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Journal Entry
+
+  /api/v1/journal-entries/{journal_entry_id}/post:
+    patch:
+      summary: Post an existing journal entry
+      parameters:
+        - $ref: ./parameters/journal_entry_id.yaml
+      responses:
+        '200':
+          description: Journal entry successfully posted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/journal_entry.yaml
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Journal Entry

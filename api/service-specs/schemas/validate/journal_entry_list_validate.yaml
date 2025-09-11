@@ -1,0 +1,14 @@
+type: object
+properties:
+  errors:
+    type: object
+    properties:
+      status:
+        type: string
+        example: Failed validation rule 'enum'
+      page:
+        type: string
+        example: Failed validation rule 'integer'
+      page_size:
+        type: string
+        example: Failed validation rule 'integer'

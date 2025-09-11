@@ -1,0 +1,37 @@
+type: object
+x-fc-class-name: journal_entries.JournalEntryLinePatch
+properties:
+  id:
+    example: 7e2e0544-931c-4c07-a761-5ae95202d4e1
+    format: uuid4
+    type: string
+    nullable: true
+
+  account_id:
+    example: 7e2e0544-931c-4c07-a761-5ae95202d4e1
+    format: uuid4
+    type: string
+    nullable: true
+
+  notes:
+    example: Payment for invoice INV-001
+    type: string
+    description: Notes for the journal entry line.
+    minLength: 3
+    maxLength: 255
+    nullable: true
+
+  debit:
+    example: 100
+    type: number
+    description: The debit amount for the journal entry line.
+    minimum: 0
+    nullable: true
+  
+  credit:
+    example: 0
+    type: number
+    description: The credit amount for the journal entry line.
+    minimum: 0
+    nullable: true
+

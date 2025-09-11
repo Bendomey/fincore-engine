@@ -1,0 +1,14 @@
+type: object
+properties:
+  errors:
+    type: object
+    properties:
+      status:
+        type: string
+        example: Failed validation rule 'required'
+      reference:
+        type: string
+        example: Failed validation rule 'required'
+      transaction_date:
+        type: string
+        example: Failed validation rule 'required'

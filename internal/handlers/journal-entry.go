@@ -103,7 +103,6 @@ type UpdateJournalEntryLineInput struct {
 }
 
 type UpdateJournalEntryRequest struct {
-	ID              string                         `json:"id" validate:"required,uuid4"`
 	Reference       *string                        `json:"reference" validate:"omitempty,min=3,max=255"`
 	TransactionDate *string                        `json:"transaction_date" validate:"omitempty,datetime"`
 	Metadata        *map[string]interface{}        `json:"metadata" validate:"omitempty,json"`
@@ -145,7 +144,7 @@ func (h *JournalEntryHandler) UpdateJournalEntry(w http.ResponseWriter, r *http.
 	}
 
 	journalEntry, err := h.service.UpdateJournalEntry(r.Context(), chi.URLParam(r, "journal_entry_id"), services.UpdateJournalEntryInput{
-		ID:              body.ID,
+		ID:              chi.URLParam(r, "journal_entry_id"),
 		Reference:       body.Reference,
 		TransactionDate: body.TransactionDate,
 		Metadata:        body.Metadata,
@@ -229,7 +228,7 @@ func (h *JournalEntryHandler) DeleteJournalEntry(w http.ResponseWriter, r *http.
 
 type GetJournalEntryRequest struct {
 	ClientID string    `json:"client_id" validate:"required,uuid4"`
-	ID       string    `json:"name" validate:"required,uuid4"`
+	ID       string    `json:"id" validate:"required,uuid4"`
 	Populate *[]string `json:"populate" validate:"omitempty,dive,oneof=JournalEntryLines, Account"`
 }
 
@@ -242,7 +241,7 @@ func (h *JournalEntryHandler) GetJournalEntry(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	input := GetAccountRequest{
+	input := GetJournalEntryRequest{
 		ClientID: client.ID.String(),
 		ID:       chi.URLParam(r, "journal_entry_id"),
 		Populate: getPopulateFields(r),

@@ -1,0 +1,6 @@
+type: string
+enum:
+  - POSTED
+  - DRAFT
+description: The status of the journal entry.
+example: POSTED

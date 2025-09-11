@@ -1,0 +1,37 @@
+type: object
+x-fc-class-name: journal_entries.JournalEntryPost
+properties:
+  status:
+    $ref: ./enums/journal_entry_status.yaml
+
+  reference:
+    example: INV-001
+    type: string
+    description: The reference of the journal entry.
+    minLength: 3
+    maxLength: 255
+
+  transaction_date:
+    example: 2023-01-01
+    type: string
+    format: date
+    description: The date of the transaction.
+    nullable: true
+
+  metadata:
+    example: {"key": "value"}
+    type: object
+    description: Additional metadata for the journal entry.
+    nullable: true
+
+  lines:
+    type: array
+    description: The lines of the journal entry.
+    minItems: 2
+    items:
+      $ref: ./journal_entry_line_post.yaml
+
+required:
+  - status
+  - reference
+  - lines

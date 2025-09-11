@@ -1,0 +1,8 @@
+name: journal_entry_status
+description: Filter journal entries by their status
+in: query
+required: false
+schema:
+  $ref: ../schemas/enums/journal_entry_status.yaml
+
+  

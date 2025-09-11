@@ -1,0 +1,9 @@
+name: journal_entry_id
+description: The id of the journal entry resource
+in: path
+required: true
+schema:
+  format: uuid4
+  type: string
+  example: 7e2e0544-931c-4c07-a761-5ae95202d4e1
+
