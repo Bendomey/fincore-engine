@@ -301,7 +301,7 @@ paths:
         - $ref: ./parameters/search_fields.yaml
         - $ref: ./parameters/start_date.yaml
         - $ref: ./parameters/end_date.yaml
-        - $ref: ./parameters/populate_journal_account.yaml
+        - $ref: ./parameters/populate_journal_entry.yaml
         - $ref: ./parameters/journal_entry_status.yaml
       responses:
         '200':
