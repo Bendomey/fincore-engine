@@ -28,7 +28,11 @@ func NewClientService(repo repository.ClientRepository) ClientService {
 	return &clientService{repo}
 }
 
-func (s *clientService) AuthenticateClient(ctx context.Context, clientId string, clientSecret string) (*models.Client, error) {
+func (s *clientService) AuthenticateClient(
+	ctx context.Context,
+	clientId string,
+	clientSecret string,
+) (*models.Client, error) {
 	client, err := s.repo.GetByClientID(ctx, clientId)
 	if err != nil {
 		return nil, err
@@ -61,7 +65,6 @@ type CreateUserResponse struct {
 }
 
 func (s *clientService) CreateClient(ctx context.Context, input CreateUserInput) (*CreateUserResponse, error) {
-
 	// does email exists?
 	clientByEmail, clientByEmailErr := s.repo.GetByClientEmail(ctx, input.Email)
 

@@ -15,8 +15,16 @@ type AccountService interface {
 	UpdateAccount(ctx context.Context, accountId string, input UpdateAccountInput) (*models.Account, error)
 	DeleteAccount(ctx context.Context, input DeleteAccountInput) error
 	GetAccount(ctx context.Context, input GetAccountInput) (*models.Account, error)
-	ListAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) ([]models.Account, error)
-	CountAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) (int64, error)
+	ListAccounts(
+		ctx context.Context,
+		filterQuery lib.FilterQuery,
+		filters repository.ListAccountsFilter,
+	) ([]models.Account, error)
+	CountAccounts(
+		ctx context.Context,
+		filterQuery lib.FilterQuery,
+		filters repository.ListAccountsFilter,
+	) (int64, error)
 }
 
 type accountService struct {
@@ -39,7 +47,6 @@ type CreateAccountInput struct {
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, input CreateAccountInput) (*models.Account, error) {
-
 	if input.IsGroup {
 		if input.ParentAccountID != nil {
 			return nil, errors.New("Cannot set parent account for a group account")
@@ -108,7 +115,6 @@ func GenerateAccountCode(repo repository.AccountRepository, accountType string) 
 	}, repository.ListAccountsFilter{
 		AccountType: &accountType,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +141,11 @@ type UpdateAccountInput struct {
 	Description *string
 }
 
-func (s *accountService) UpdateAccount(ctx context.Context, accountId string, input UpdateAccountInput) (*models.Account, error) {
+func (s *accountService) UpdateAccount(
+	ctx context.Context,
+	accountId string,
+	input UpdateAccountInput,
+) (*models.Account, error) {
 	account, err := s.repo.GetByID(ctx, accountId, nil)
 	if err != nil {
 		return nil, err
@@ -148,7 +158,6 @@ func (s *accountService) UpdateAccount(ctx context.Context, accountId string, in
 	account.Description = input.Description
 
 	err = s.repo.Update(ctx, account)
-
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +194,11 @@ func (s *accountService) GetAccount(ctx context.Context, input GetAccountInput) 
 	return account, nil
 }
 
-func (s *accountService) ListAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) ([]models.Account, error) {
+func (s *accountService) ListAccounts(
+	ctx context.Context,
+	filterQuery lib.FilterQuery,
+	filters repository.ListAccountsFilter,
+) ([]models.Account, error) {
 	accounts, err := s.repo.List(ctx, filterQuery, filters)
 	if err != nil {
 		return nil, err
@@ -194,6 +207,10 @@ func (s *accountService) ListAccounts(ctx context.Context, filterQuery lib.Filte
 	return *accounts, nil
 }
 
-func (s *accountService) CountAccounts(ctx context.Context, filterQuery lib.FilterQuery, filters repository.ListAccountsFilter) (int64, error) {
+func (s *accountService) CountAccounts(
+	ctx context.Context,
+	filterQuery lib.FilterQuery,
+	filters repository.ListAccountsFilter,
+) (int64, error) {
 	return s.repo.Count(ctx, filterQuery, filters)
 }

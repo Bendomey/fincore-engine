@@ -1,0 +1,25 @@
+name: API CI
+
+on:
+  push:
+    branches:
+      - main
+      - prod
+  pull_request:
+
+jobs:
+    code-checks:
+        name: Lint
+        runs-on: ubuntu-latest
+        steps:
+            - name: ⬇️ Checkout repo
+              uses: actions/checkout@v4
+            - name: ⎔ Setup go
+              uses: actions/setup-go@v5
+              with:
+                go-version-file: go.mod
+                cache: true
+            - name: 📥 Download deps
+              run: go mod download && make install-tools
+            - name: 🔬 Lint
+              run: make lint

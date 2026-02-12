@@ -9,19 +9,17 @@ import (
 type Account struct {
 	BaseModelSoftDelete
 	ClientID string `json:"client_id" gorm:"not null;index;"`
-	Client   Client `json:"client" gorm:"foreignKey:ClientID;references:ID"`
+	Client   Client
 
-	Code        string  `json:"code" gorm:"not null;uniqueIndex;"`
-	Name        string  `json:"name" gorm:"not null;"`
+	Code        string  `json:"code"        gorm:"not null;uniqueIndex;"`
+	Name        string  `json:"name"        gorm:"not null;"`
 	Description *string `json:"description"`
-	Type        string  `json:"type" gorm:"not null; index;"` // EXPENSE | LIABILITY | EQUITY | ASSET | INCOME
-	IsContra    bool    `json:"is_contra" gorm:"not null;"`
-	IsGroup     bool    `json:"is_group" gorm:"not null;default:false;index;"`
+	Type        string  `json:"type"        gorm:"not null; index;"` // EXPENSE | LIABILITY | EQUITY | ASSET | INCOME
+	IsContra    bool    `json:"is_contra"   gorm:"not null;"`
+	IsGroup     bool    `json:"is_group"    gorm:"not null;default:false;index;"`
 
-	ParentAccount   *Account `json:"parent_account" gorm:"foreignKey:ParentAccountID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	ParentAccountID *string  `json:"parent_account_id"`
-
-	JournalEntries []JournalEntry `json:"journal_entries" gorm:"foreignKey:AccountID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	ParentAccount   *Account
+	ParentAccountID *string `json:"parent_account_id"`
 }
 
 func (acc *Account) BeforeDelete(tx *gorm.DB) (err error) {

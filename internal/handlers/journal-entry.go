@@ -23,21 +23,20 @@ func NewJournalEntryHandler(service services.JournalEntryService, validate *vali
 
 type CreateJournalEntryLineInput struct {
 	AccountID string  `json:"account_id" validate:"required,uuid4"`
-	Notes     *string `json:"notes" validate:"omitempty,max=1024"`
-	Debit     int64   `json:"debit" validate:"required,number,min=0"`
-	Credit    int64   `json:"credit" validate:"required,number,min=0"`
+	Notes     *string `json:"notes"      validate:"omitempty,max=1024"`
+	Debit     int64   `json:"debit"      validate:"required,number,min=0"`
+	Credit    int64   `json:"credit"     validate:"required,number,min=0"`
 }
 
 type CreateJournalEntryRequest struct {
-	Status          string                        `json:"status" validate:"required,oneof=DRAFT POSTED"`
-	Reference       string                        `json:"reference" validate:"required,min=3,max=255"`
+	Status          string                        `json:"status"           validate:"required,oneof=DRAFT POSTED"`
+	Reference       string                        `json:"reference"        validate:"required,min=3,max=255"`
 	TransactionDate *string                       `json:"transaction_date" validate:"omitempty,datetime"`
-	Metadata        *map[string]interface{}       `json:"metadata" validate:"omitempty,json"`
-	Lines           []CreateJournalEntryLineInput `json:"lines" validate:"required,min=2,dive"`
+	Metadata        *map[string]interface{}       `json:"metadata"         validate:"omitempty,json"`
+	Lines           []CreateJournalEntryLineInput `json:"lines"            validate:"required,min=2,dive"`
 }
 
 func (h *JournalEntryHandler) CreateJournalEntry(w http.ResponseWriter, r *http.Request) {
-
 	var body CreateJournalEntryRequest
 	if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
@@ -76,7 +75,6 @@ func (h *JournalEntryHandler) CreateJournalEntry(w http.ResponseWriter, r *http.
 
 		ClientID: client.ID.String(),
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -91,26 +89,24 @@ func (h *JournalEntryHandler) CreateJournalEntry(w http.ResponseWriter, r *http.
 	json.NewEncoder(w).Encode(map[string]any{
 		"data": transformations.DBJournalEntryToRestJournalEntry(journalEntry, nil),
 	})
-
 }
 
 type UpdateJournalEntryLineInput struct {
-	ID        *string `json:"id" validate:"omitempty,uuid4"`
+	ID        *string `json:"id"         validate:"omitempty,uuid4"`
 	AccountID *string `json:"account_id" validate:"omitempty,uuid4"`
-	Notes     *string `json:"notes" validate:"omitempty,max=1024"`
-	Debit     *int64  `json:"debit" validate:"omitempty,number,min=0"`
-	Credit    *int64  `json:"credit" validate:"omitempty,number,min=0"`
+	Notes     *string `json:"notes"      validate:"omitempty,max=1024"`
+	Debit     *int64  `json:"debit"      validate:"omitempty,number,min=0"`
+	Credit    *int64  `json:"credit"     validate:"omitempty,number,min=0"`
 }
 
 type UpdateJournalEntryRequest struct {
-	Reference       *string                        `json:"reference" validate:"omitempty,min=3,max=255"`
+	Reference       *string                        `json:"reference"        validate:"omitempty,min=3,max=255"`
 	TransactionDate *string                        `json:"transaction_date" validate:"omitempty,datetime"`
-	Metadata        *map[string]interface{}        `json:"metadata" validate:"omitempty,json"`
-	Lines           *[]UpdateJournalEntryLineInput `json:"lines" validate:"omitempty,min=2,dive"`
+	Metadata        *map[string]interface{}        `json:"metadata"         validate:"omitempty,json"`
+	Lines           *[]UpdateJournalEntryLineInput `json:"lines"            validate:"omitempty,min=2,dive"`
 }
 
 func (h *JournalEntryHandler) UpdateJournalEntry(w http.ResponseWriter, r *http.Request) {
-
 	var body UpdateJournalEntryRequest
 	if decodeErr := json.NewDecoder(r.Body).Decode(&body); decodeErr != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
@@ -143,16 +139,19 @@ func (h *JournalEntryHandler) UpdateJournalEntry(w http.ResponseWriter, r *http.
 		}
 	}
 
-	journalEntry, err := h.service.UpdateJournalEntry(r.Context(), chi.URLParam(r, "journal_entry_id"), services.UpdateJournalEntryInput{
-		ID:              chi.URLParam(r, "journal_entry_id"),
-		Reference:       body.Reference,
-		TransactionDate: body.TransactionDate,
-		Metadata:        body.Metadata,
-		Lines:           &lines,
+	journalEntry, err := h.service.UpdateJournalEntry(
+		r.Context(),
+		chi.URLParam(r, "journal_entry_id"),
+		services.UpdateJournalEntryInput{
+			ID:              chi.URLParam(r, "journal_entry_id"),
+			Reference:       body.Reference,
+			TransactionDate: body.TransactionDate,
+			Metadata:        body.Metadata,
+			Lines:           &lines,
 
-		ClientID: client.ID.String(),
-	})
-
+			ClientID: client.ID.String(),
+		},
+	)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -167,7 +166,6 @@ func (h *JournalEntryHandler) UpdateJournalEntry(w http.ResponseWriter, r *http.
 	json.NewEncoder(w).Encode(map[string]any{
 		"data": transformations.DBJournalEntryToRestJournalEntry(journalEntry, nil),
 	})
-
 }
 
 func (h *JournalEntryHandler) PostJournalEntry(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +180,6 @@ func (h *JournalEntryHandler) PostJournalEntry(w http.ResponseWriter, r *http.Re
 		ClientID: client.ID.String(),
 		ID:       chi.URLParam(r, "journal_entry_id"),
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -211,7 +208,6 @@ func (h *JournalEntryHandler) DeleteJournalEntry(w http.ResponseWriter, r *http.
 		ClientID: client.ID.String(),
 		ID:       chi.URLParam(r, "journal_entry_id"),
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -228,12 +224,11 @@ func (h *JournalEntryHandler) DeleteJournalEntry(w http.ResponseWriter, r *http.
 
 type GetJournalEntryRequest struct {
 	ClientID string    `json:"client_id" validate:"required,uuid4"`
-	ID       string    `json:"id" validate:"required,uuid4"`
-	Populate *[]string `json:"populate" validate:"omitempty,dive,oneof=JournalEntryLines, Account"`
+	ID       string    `json:"id"        validate:"required,uuid4"`
+	Populate *[]string `json:"populate"  validate:"omitempty,dive,oneof=JournalEntryLines, Account"`
 }
 
 func (h *JournalEntryHandler) GetJournalEntry(w http.ResponseWriter, r *http.Request) {
-
 	client, clientOk := lib.ClientFromContext(r.Context())
 
 	if !clientOk {
@@ -258,7 +253,6 @@ func (h *JournalEntryHandler) GetJournalEntry(w http.ResponseWriter, r *http.Req
 		ID:       input.ID,
 		Populate: input.Populate,
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -273,16 +267,14 @@ func (h *JournalEntryHandler) GetJournalEntry(w http.ResponseWriter, r *http.Req
 	json.NewEncoder(w).Encode(map[string]any{
 		"data": transformations.DBJournalEntryToRestJournalEntry(journalEntry, input.Populate),
 	})
-
 }
 
 type ListJournalEntriesFilterRequest struct {
 	ClientID string  `json:"client_id" validate:"required,uuid4"`
-	Status   *string `json:"status" validate:"omitempty,oneof=DRAFT POSTED"`
+	Status   *string `json:"status"    validate:"omitempty,oneof=DRAFT POSTED"`
 }
 
 func (h *JournalEntryHandler) ListJournalEntries(w http.ResponseWriter, r *http.Request) {
-
 	client, clientOk := lib.ClientFromContext(r.Context())
 
 	if !clientOk {
@@ -316,10 +308,14 @@ func (h *JournalEntryHandler) ListJournalEntries(w http.ResponseWriter, r *http.
 		return
 	}
 
-	journalEntries, journalEntriesErr := h.service.ListJournalEntries(r.Context(), *filterQuery, repository.ListJournalEntriesFilter{
-		ClientId: filters.ClientID,
-		Status:   filters.Status,
-	})
+	journalEntries, journalEntriesErr := h.service.ListJournalEntries(
+		r.Context(),
+		*filterQuery,
+		repository.ListJournalEntriesFilter{
+			ClientId: filters.ClientID,
+			Status:   filters.Status,
+		},
+	)
 
 	if journalEntriesErr != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -348,7 +344,10 @@ func (h *JournalEntryHandler) ListJournalEntries(w http.ResponseWriter, r *http.
 
 	journalEntriesTransformed := make([]interface{}, 0)
 	for _, journalEntry := range journalEntries {
-		journalEntriesTransformed = append(journalEntriesTransformed, transformations.DBJournalEntryToRestJournalEntry(&journalEntry, filterQuery.Populate))
+		journalEntriesTransformed = append(
+			journalEntriesTransformed,
+			transformations.DBJournalEntryToRestJournalEntry(&journalEntry, filterQuery.Populate),
+		)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -364,5 +363,4 @@ func (h *JournalEntryHandler) ListJournalEntries(w http.ResponseWriter, r *http.
 			"has_previous_page": filterQuery.Page > 1,
 		},
 	})
-
 }

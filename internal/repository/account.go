@@ -78,7 +78,12 @@ func (r *accountRepository) GetByID(ctx context.Context, id string, populate *[]
 	return &account, nil
 }
 
-func (r *accountRepository) GetByIDAndClientID(ctx context.Context, id string, clientID string, populate *[]string) (*models.Account, error) {
+func (r *accountRepository) GetByIDAndClientID(
+	ctx context.Context,
+	id string,
+	clientID string,
+	populate *[]string,
+) (*models.Account, error) {
 	var account models.Account
 	db := r.DB.WithContext(ctx)
 
@@ -105,7 +110,11 @@ type ListAccountsFilter struct {
 	IsGroup         *bool
 }
 
-func (r *accountRepository) List(ctx context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (*[]models.Account, error) {
+func (r *accountRepository) List(
+	ctx context.Context,
+	filterQuery lib.FilterQuery,
+	filters ListAccountsFilter,
+) (*[]models.Account, error) {
 	var accounts []models.Account
 
 	db := r.DB.WithContext(ctx).
@@ -137,7 +146,11 @@ func (r *accountRepository) List(ctx context.Context, filterQuery lib.FilterQuer
 	return &accounts, nil
 }
 
-func (r *accountRepository) Count(ctx context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (int64, error) {
+func (r *accountRepository) Count(
+	ctx context.Context,
+	filterQuery lib.FilterQuery,
+	filters ListAccountsFilter,
+) (int64, error) {
 	var count int64
 
 	result := r.DB.

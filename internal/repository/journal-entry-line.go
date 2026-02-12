@@ -9,7 +9,12 @@ import (
 )
 
 type JournalEntryLineRepository interface {
-	GetByIDAndEntryID(context context.Context, id string, entryID string, populate *[]string) (*models.JournalEntryLine, error)
+	GetByIDAndEntryID(
+		context context.Context,
+		id string,
+		entryID string,
+		populate *[]string,
+	) (*models.JournalEntryLine, error)
 	GetByID(context context.Context, id string, populate *[]string) (*models.JournalEntryLine, error)
 	Update(ctx context.Context, journalEntryLine *models.JournalEntryLine) error
 }
@@ -27,7 +32,12 @@ func NewJournalEntryLineRepository(DB *gorm.DB) JournalEntryLineRepository {
 	return &journalEntryLineRepository{DB}
 }
 
-func (r *journalEntryLineRepository) GetByIDAndEntryID(context context.Context, id string, entryID string, populate *[]string) (*models.JournalEntryLine, error) {
+func (r *journalEntryLineRepository) GetByIDAndEntryID(
+	context context.Context,
+	id string,
+	entryID string,
+	populate *[]string,
+) (*models.JournalEntryLine, error) {
 	var journalEntryLine models.JournalEntryLine
 	db := r.DB.WithContext(context)
 
@@ -46,7 +56,11 @@ func (r *journalEntryLineRepository) GetByIDAndEntryID(context context.Context, 
 	return &journalEntryLine, nil
 }
 
-func (r *journalEntryLineRepository) GetByID(ctx context.Context, id string, populate *[]string) (*models.JournalEntryLine, error) {
+func (r *journalEntryLineRepository) GetByID(
+	ctx context.Context,
+	id string,
+	populate *[]string,
+) (*models.JournalEntryLine, error) {
 	var journalEntryLine models.JournalEntryLine
 	db := r.DB.WithContext(ctx)
 

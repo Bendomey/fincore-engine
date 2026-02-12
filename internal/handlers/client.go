@@ -20,7 +20,7 @@ func NewClientHandler(service services.ClientService, validate *validator.Valida
 }
 
 type CreateClientRequest struct {
-	Name  string `json:"name" validate:"required,min=3,max=255"`
+	Name  string `json:"name"  validate:"required,min=3,max=255"`
 	Email string `json:"email" validate:"required,email"`
 }
 
@@ -41,7 +41,6 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 		Name:  body.Name,
 		Email: body.Email,
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -56,7 +55,6 @@ func (h *ClientHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{
 		"data": transformations.DBClientToRestClient(&client.Client, &client.Secret),
 	})
-
 }
 
 func (h *ClientHandler) GetClient(w http.ResponseWriter, r *http.Request) {

@@ -15,3 +15,12 @@ update-db:
 
 deploy-staging:
 	fly deploy --config fly.staging.toml --remote-only
+
+lint:
+	~/go/bin/gofumpt -l -d .
+	~/go/bin/golines -m 120 -d .
+
+lint-fix:
+	~/go/bin/gofumpt -l -w .
+	~/go/bin/golines -m 120 -w .
+	~/go/bin/swag fmt

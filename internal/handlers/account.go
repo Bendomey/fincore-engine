@@ -22,12 +22,12 @@ func NewAccountHandler(service services.AccountService, validate *validator.Vali
 }
 
 type CreateAccountRequest struct {
-	Name            string  `json:"name" validate:"required,min=3,max=255"`
-	Type            string  `json:"type" validate:"required,oneof=EXPENSE LIABILITY EQUITY ASSET INCOME"`
-	IsContra        bool    `json:"is_contra" validate:"boolean"`
-	IsGroup         bool    `json:"is_group" validate:"boolean"`
+	Name            string  `json:"name"              validate:"required,min=3,max=255"`
+	Type            string  `json:"type"              validate:"required,oneof=EXPENSE LIABILITY EQUITY ASSET INCOME"`
+	IsContra        bool    `json:"is_contra"         validate:"boolean"`
+	IsGroup         bool    `json:"is_group"          validate:"boolean"`
 	ParentAccountID *string `json:"parent_account_id" validate:"omitempty,uuid4"`
-	Description     *string `json:"description" validate:"omitempty,max=1024"`
+	Description     *string `json:"description"       validate:"omitempty,max=1024"`
 }
 
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,6 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		Description:     body.Description,
 		ClientID:        client.ID.String(),
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -77,7 +76,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 type UpdateAccountRequest struct {
-	Name        *string `json:"name" validate:"omitempty,min=3,max=255"`
+	Name        *string `json:"name"        validate:"omitempty,min=3,max=255"`
 	Description *string `json:"description" validate:"omitempty,max=1024"`
 }
 
@@ -98,7 +97,6 @@ func (h *AccountHandler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		Name:        body.Name,
 		Description: body.Description,
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -127,7 +125,6 @@ func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 		ClientID: client.ID.String(),
 		ID:       chi.URLParam(r, "account_id"),
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -144,8 +141,8 @@ func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 type GetAccountRequest struct {
 	ClientID string    `json:"client_id" validate:"required,uuid4"`
-	ID       string    `json:"name" validate:"required,uuid4"`
-	Populate *[]string `json:"populate" validate:"omitempty,dive,oneof=ParentAccount"`
+	ID       string    `json:"name"      validate:"required,uuid4"`
+	Populate *[]string `json:"populate"  validate:"omitempty,dive,oneof=ParentAccount"`
 }
 
 func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
@@ -173,7 +170,6 @@ func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 		ID:       input.ID,
 		Populate: input.Populate,
 	})
-
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -191,11 +187,11 @@ func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 type ListAccountsFilterRequest struct {
-	ClientID        string  `json:"client_id" validate:"required,uuid4"`
+	ClientID        string  `json:"client_id"         validate:"required,uuid4"`
 	ParentAccountID *string `json:"parent_account_id" validate:"omitempty,uuid4"`
-	AccountType     *string `json:"account_type" validate:"omitempty,oneof=EXPENSE LIABILITY EQUITY ASSET INCOME"`
-	IsContra        *string `json:"is_contra" validate:"omitempty,boolean"`
-	IsGroup         *string `json:"is_group" validate:"omitempty,boolean"`
+	AccountType     *string `json:"account_type"      validate:"omitempty,oneof=EXPENSE LIABILITY EQUITY ASSET INCOME"`
+	IsContra        *string `json:"is_contra"         validate:"omitempty,boolean"`
+	IsGroup         *string `json:"is_group"          validate:"omitempty,boolean"`
 }
 
 func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
@@ -273,7 +269,10 @@ func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 
 	accountsTransformed := make([]interface{}, 0)
 	for _, account := range accounts {
-		accountsTransformed = append(accountsTransformed, transformations.DBAccountToRestAccount(&account, filterQuery.Populate))
+		accountsTransformed = append(
+			accountsTransformed,
+			transformations.DBAccountToRestAccount(&account, filterQuery.Populate),
+		)
 	}
 
 	w.WriteHeader(http.StatusOK)

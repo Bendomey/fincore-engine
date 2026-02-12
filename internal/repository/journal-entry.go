@@ -14,9 +14,18 @@ type JournalEntryRepository interface {
 	Update(context context.Context, journalEntry *models.JournalEntry) error
 	Delete(context context.Context, journalEntry *models.JournalEntry) error
 	FindAndDelete(context context.Context, id string) error
-	GetByIDAndClientID(context context.Context, id string, clientID string, populate *[]string) (*models.JournalEntry, error)
+	GetByIDAndClientID(
+		context context.Context,
+		id string,
+		clientID string,
+		populate *[]string,
+	) (*models.JournalEntry, error)
 	GetByID(context context.Context, id string, populate *[]string) (*models.JournalEntry, error)
-	List(context context.Context, filterQuery lib.FilterQuery, filters ListJournalEntriesFilter) (*[]models.JournalEntry, error)
+	List(
+		context context.Context,
+		filterQuery lib.FilterQuery,
+		filters ListJournalEntriesFilter,
+	) (*[]models.JournalEntry, error)
 	Count(context context.Context, filterQuery lib.FilterQuery, filters ListJournalEntriesFilter) (int64, error)
 }
 
@@ -50,7 +59,12 @@ func (r *journalEntryRepository) FindAndDelete(ctx context.Context, id string) e
 	return r.DB.WithContext(ctx).Delete(&journalEntry).Error
 }
 
-func (r *journalEntryRepository) GetByIDAndClientID(context context.Context, id string, clientID string, populate *[]string) (*models.JournalEntry, error) {
+func (r *journalEntryRepository) GetByIDAndClientID(
+	context context.Context,
+	id string,
+	clientID string,
+	populate *[]string,
+) (*models.JournalEntry, error) {
 	var journalEntry models.JournalEntry
 	db := r.DB.WithContext(context)
 
@@ -69,7 +83,11 @@ func (r *journalEntryRepository) GetByIDAndClientID(context context.Context, id 
 	return &journalEntry, nil
 }
 
-func (r *journalEntryRepository) GetByID(ctx context.Context, id string, populate *[]string) (*models.JournalEntry, error) {
+func (r *journalEntryRepository) GetByID(
+	ctx context.Context,
+	id string,
+	populate *[]string,
+) (*models.JournalEntry, error) {
 	var journalEntry models.JournalEntry
 	db := r.DB.WithContext(ctx)
 
@@ -93,7 +111,11 @@ type ListJournalEntriesFilter struct {
 	Status   *string
 }
 
-func (r *journalEntryRepository) List(ctx context.Context, filterQuery lib.FilterQuery, filters ListJournalEntriesFilter) (*[]models.JournalEntry, error) {
+func (r *journalEntryRepository) List(
+	ctx context.Context,
+	filterQuery lib.FilterQuery,
+	filters ListJournalEntriesFilter,
+) (*[]models.JournalEntry, error) {
 	var journalEntries []models.JournalEntry
 
 	db := r.DB.WithContext(ctx).
@@ -122,7 +144,11 @@ func (r *journalEntryRepository) List(ctx context.Context, filterQuery lib.Filte
 	return &journalEntries, nil
 }
 
-func (r *journalEntryRepository) Count(ctx context.Context, filterQuery lib.FilterQuery, filters ListJournalEntriesFilter) (int64, error) {
+func (r *journalEntryRepository) Count(
+	ctx context.Context,
+	filterQuery lib.FilterQuery,
+	filters ListJournalEntriesFilter,
+) (int64, error) {
 	var count int64
 
 	result := r.DB.

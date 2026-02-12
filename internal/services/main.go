@@ -11,10 +11,17 @@ type Services struct {
 }
 
 func NewServices(repository repository.Repository) Services {
-
 	clientService := NewClientService(repository.ClientRepository)
 	accountService := NewAccountService(repository.AccountRepository)
-	journalEntryService := NewJournalEntryService(repository.JournalEntryRepository, repository.AccountRepository, repository.JournalEntryLineRepository)
+	journalEntryService := NewJournalEntryService(
+		repository.JournalEntryRepository,
+		repository.AccountRepository,
+		repository.JournalEntryLineRepository,
+	)
 
-	return Services{ClientService: clientService, AccountService: accountService, JournalEntryService: journalEntryService}
+	return Services{
+		ClientService:       clientService,
+		AccountService:      accountService,
+		JournalEntryService: journalEntryService,
+	}
 }

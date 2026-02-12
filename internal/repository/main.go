@@ -10,11 +10,15 @@ type Repository struct {
 }
 
 func NewRepository(db *gorm.DB) Repository {
-
 	clientRepository := NewClientRepository(db)
 	accountRepository := NewAccountRepository(db)
 	journalEntryRepository := NewJournalEntryRepository(db)
 	journalEntryLineRepository := NewJournalEntryLineRepository(db)
 
-	return Repository{ClientRepository: clientRepository, AccountRepository: accountRepository, JournalEntryRepository: journalEntryRepository, JournalEntryLineRepository: journalEntryLineRepository}
+	return Repository{
+		ClientRepository:           clientRepository,
+		AccountRepository:          accountRepository,
+		JournalEntryRepository:     journalEntryRepository,
+		JournalEntryLineRepository: journalEntryLineRepository,
+	}
 }
