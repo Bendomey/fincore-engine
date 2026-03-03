@@ -24,8 +24,8 @@ func NewJournalEntryHandler(service services.JournalEntryService, validate *vali
 type CreateJournalEntryLineInput struct {
 	AccountID string  `json:"account_id" validate:"required,uuid4"`
 	Notes     *string `json:"notes"      validate:"omitempty,max=1024"`
-	Debit     int64   `json:"debit"      validate:"required,number,min=0"`
-	Credit    int64   `json:"credit"     validate:"required,number,min=0"`
+	Debit     int64   `json:"debit"      validate:"number,min=0"`
+	Credit    int64   `json:"credit"     validate:"number,min=0"`
 }
 
 type CreateJournalEntryRequest struct {
