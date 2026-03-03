@@ -32,7 +32,7 @@ type CreateJournalEntryRequest struct {
 	Status          string                        `json:"status"           validate:"required,oneof=DRAFT POSTED"`
 	Reference       string                        `json:"reference"        validate:"required,min=3,max=255"`
 	TransactionDate *string                       `json:"transaction_date" validate:"omitempty,datetime"`
-	Metadata        *map[string]interface{}       `json:"metadata"         validate:"omitempty,json"`
+	Metadata        *map[string]interface{}       `json:"metadata"         validate:"omitempty"`
 	Lines           []CreateJournalEntryLineInput `json:"lines"            validate:"required,min=2,dive"`
 }
 
@@ -102,7 +102,7 @@ type UpdateJournalEntryLineInput struct {
 type UpdateJournalEntryRequest struct {
 	Reference       *string                        `json:"reference"        validate:"omitempty,min=3,max=255"`
 	TransactionDate *string                        `json:"transaction_date" validate:"omitempty,datetime"`
-	Metadata        *map[string]interface{}        `json:"metadata"         validate:"omitempty,json"`
+	Metadata        *map[string]interface{}        `json:"metadata"         validate:"omitempty"`
 	Lines           *[]UpdateJournalEntryLineInput `json:"lines"            validate:"omitempty,min=2,dive"`
 }
 

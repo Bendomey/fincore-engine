@@ -11,9 +11,18 @@ import (
 
 func ValidateRequest(validate *validator.Validate, body interface{}, w http.ResponseWriter) bool {
 	if err := validate.Struct(body); err != nil {
-		errs := err.(validator.ValidationErrors)
-		errorMessages := make(map[string]string)
+		errs, ok := err.(validator.ValidationErrors)
+		if !ok {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]any{
+				"errors": map[string]string{
+					"message": err.Error(),
+				},
+			})
+			return false
+		}
 
+		errorMessages := make(map[string]string)
 		for _, e := range errs {
 			errorMessages[strings.ToLower(e.Field())] = fmt.Sprintf("Failed validation rule '%s'", e.Tag())
 		}
