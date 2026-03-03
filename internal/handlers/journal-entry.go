@@ -31,7 +31,7 @@ type CreateJournalEntryLineInput struct {
 type CreateJournalEntryRequest struct {
 	Status          string                        `json:"status"           validate:"required,oneof=DRAFT POSTED"`
 	Reference       string                        `json:"reference"        validate:"required,min=3,max=255"`
-	TransactionDate *string                       `json:"transaction_date" validate:"omitempty,datetime"`
+	TransactionDate *string                       `json:"transaction_date" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 	Metadata        *map[string]interface{}       `json:"metadata"         validate:"omitempty"`
 	Lines           []CreateJournalEntryLineInput `json:"lines"            validate:"required,min=2,dive"`
 }
