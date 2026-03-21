@@ -6,7 +6,7 @@ FinCore is a double-entry accounting engine. It enforces that every journal entr
 
 | Environment | URL |
 |-------------|-----|
-| Production  | https://fincore.fly.dev |
+| Production  | https://fincore-engine.fly.dev |
 | Staging     | https://fincore-staging.fly.dev |
 | Local dev   | http://localhost:5002 |
 
@@ -24,7 +24,7 @@ FinCore uses header-based API key authentication.
 ### Step 1: Register a client (no auth required)
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/clients \
+curl -X POST https://fincore-engine.fly.dev/api/v1/clients \
   -H "Content-Type: application/json" \
   -d '{"name": "My App", "email": "myapp@example.com"}'
 ```
@@ -56,7 +56,7 @@ X-FinCore-Client-Secret: p68XtVzrZKkOrKB1gW8kAkUeeXxxEzHxwbsqEgcvJEY
 ```
 
 ```sh
-curl https://fincore.fly.dev/api/v1/clients/me \
+curl https://fincore-engine.fly.dev/api/v1/clients/me \
   -H "X-FinCore-Client-Id: c_2d521294-..." \
   -H "X-FinCore-Client-Secret: p68XtVzr..."
 ```
@@ -156,7 +156,7 @@ Accounts form a chart of accounts for your client. They support a hierarchy (gro
 ### POST /api/v1/accounts — Create an account
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/accounts \
+curl -X POST https://fincore-engine.fly.dev/api/v1/accounts \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: c_..." \
   -H "X-FinCore-Client-Secret: ..." \
@@ -216,7 +216,7 @@ Additional filters beyond the standard list params:
 ### GET /api/v1/accounts/{account_id} — Get single account
 
 ```sh
-curl https://fincore.fly.dev/api/v1/accounts/uuid \
+curl https://fincore-engine.fly.dev/api/v1/accounts/uuid \
   -H "X-FinCore-Client-Id: c_..." \
   -H "X-FinCore-Client-Secret: ..."
 ```
@@ -264,7 +264,7 @@ To post a draft: `PATCH /api/v1/journal-entries/{id}/post`
 ### POST /api/v1/journal-entries — Create a journal entry
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/journal-entries \
+curl -X POST https://fincore-engine.fly.dev/api/v1/journal-entries \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: c_..." \
   -H "X-FinCore-Client-Secret: ..." \
@@ -314,7 +314,7 @@ Additional filters:
 ### GET /api/v1/journal-entries/{journal_entry_id} — Get single entry
 
 ```sh
-curl "https://fincore.fly.dev/api/v1/journal-entries/uuid?populate=JournalEntryLines" \
+curl "https://fincore-engine.fly.dev/api/v1/journal-entries/uuid?populate=JournalEntryLines" \
   -H "X-FinCore-Client-Id: c_..." \
   -H "X-FinCore-Client-Secret: ..."
 ```
@@ -347,7 +347,7 @@ Only DRAFT entries can be updated.
 Finalizes the entry. No request body needed. Only DRAFT entries can be posted.
 
 ```sh
-curl -X PATCH https://fincore.fly.dev/api/v1/journal-entries/uuid/post \
+curl -X PATCH https://fincore-engine.fly.dev/api/v1/journal-entries/uuid/post \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: c_..." \
   -H "X-FinCore-Client-Secret: ..."
@@ -371,7 +371,7 @@ This end-to-end example walks through registering, creating accounts, recording 
 ### 1. Register your client
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/clients \
+curl -X POST https://fincore-engine.fly.dev/api/v1/clients \
   -H "Content-Type: application/json" \
   -d '{"name": "Acme Corp", "email": "acme@example.com"}'
 
@@ -383,7 +383,7 @@ export CLIENT_SECRET="p68XtVzr..."
 ### 2. Create a Cash account (ASSET)
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/accounts \
+curl -X POST https://fincore-engine.fly.dev/api/v1/accounts \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
@@ -396,7 +396,7 @@ export CASH_ACCOUNT_ID="uuid-of-cash-account"
 ### 3. Create a Sales Revenue account (INCOME)
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/accounts \
+curl -X POST https://fincore-engine.fly.dev/api/v1/accounts \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
@@ -410,7 +410,7 @@ export REVENUE_ACCOUNT_ID="uuid-of-revenue-account"
 A $500 cash sale: debit Cash (asset increases), credit Sales Revenue (income increases).
 
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/journal-entries \
+curl -X POST https://fincore-engine.fly.dev/api/v1/journal-entries \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
@@ -433,7 +433,7 @@ Note: amounts are in the smallest currency unit (e.g., cents). 50000 = $500.00.
 ### 5. Post the journal entry
 
 ```sh
-curl -X PATCH https://fincore.fly.dev/api/v1/journal-entries/$JOURNAL_ENTRY_ID/post \
+curl -X PATCH https://fincore-engine.fly.dev/api/v1/journal-entries/$JOURNAL_ENTRY_ID/post \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET"

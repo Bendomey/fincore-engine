@@ -14,7 +14,7 @@ servers:
     description: Local development
   - url: "https://fincore-staging.fly.dev"
     description: Staging API
-  - url: "https://fincore.fly.dev"
+  - url: "https://fincore-engine.fly.dev"
     description: Production API
 
 paths:

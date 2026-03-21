@@ -90,17 +90,17 @@ FinCore serves AI-friendly skill files so your coding assistant can help you int
 ### For any AI assistant (llms.txt)
 ```sh
 # Lightweight summary
-curl https://fincore.fly.dev/llms.txt
+curl https://fincore-engine.fly.dev/llms.txt
 
 # Full API reference
-curl https://fincore.fly.dev/llms-full.txt
+curl https://fincore-engine.fly.dev/llms-full.txt
 ```
 
 ### For Claude Code
 ```sh
 # Download the skill file into your project
 mkdir -p .claude/commands
-curl -o .claude/commands/fincore.md https://fincore.fly.dev/skill.md
+curl -o .claude/commands/fincore.md https://fincore-engine.fly.dev/skill.md
 
 # Then in Claude Code, type:
 /fincore
@@ -110,7 +110,7 @@ Claude Code will load the full API reference into context and can help you write
 
 ### OpenAPI Spec
 ```sh
-curl https://fincore.fly.dev/swagger/index.yaml
+curl https://fincore-engine.fly.dev/swagger/index.yaml
 ```
 
 ---

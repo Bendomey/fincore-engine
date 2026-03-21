@@ -7,7 +7,7 @@
 
 ## API Basics
 
-- Base URL (production): https://fincore.fly.dev
+- Base URL (production): https://fincore-engine.fly.dev
 - Base URL (staging): https://fincore-staging.fly.dev
 - Base URL (local): http://localhost:5002
 - All requests and responses use Content-Type: application/json
@@ -40,6 +40,6 @@
 
 ## Documentation
 
-- [Full AI Reference](https://fincore.fly.dev/llms-full.txt)
-- [Claude Code Skill](https://fincore.fly.dev/skill.md)
-- [OpenAPI 3.0.3 Spec](https://fincore.fly.dev/swagger/index.yaml)
+- [Full AI Reference](https://fincore-engine.fly.dev/llms-full.txt)
+- [Claude Code Skill](https://fincore-engine.fly.dev/skill.md)
+- [OpenAPI 3.0.3 Spec](https://fincore-engine.fly.dev/swagger/index.yaml)

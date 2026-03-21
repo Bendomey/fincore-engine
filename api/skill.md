@@ -10,7 +10,7 @@ When the user asks you to interact with FinCore, use the reference below to writ
 
 | Environment | URL |
 |-------------|-----|
-| Production  | https://fincore.fly.dev |
+| Production  | https://fincore-engine.fly.dev |
 | Staging     | https://fincore-staging.fly.dev |
 | Local dev   | http://localhost:5002 |
 
@@ -22,7 +22,7 @@ All requests (except client registration) require:
 
 Register to get credentials:
 ```sh
-curl -X POST https://fincore.fly.dev/api/v1/clients \
+curl -X POST https://fincore-engine.fly.dev/api/v1/clients \
   -H "Content-Type: application/json" \
   -d '{"name": "My App", "email": "myapp@example.com"}'
 # Returns client_id and client_secret — save the secret, it's shown only once
@@ -146,21 +146,21 @@ Only DRAFT entries can be deleted.
 
 ```sh
 # 1. Create Cash account
-curl -X POST https://fincore.fly.dev/api/v1/accounts \
+curl -X POST https://fincore-engine.fly.dev/api/v1/accounts \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
   -d '{"name":"Cash","type":"ASSET","is_contra":false,"is_group":false}'
 
 # 2. Create Sales Revenue account
-curl -X POST https://fincore.fly.dev/api/v1/accounts \
+curl -X POST https://fincore-engine.fly.dev/api/v1/accounts \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
   -d '{"name":"Sales Revenue","type":"INCOME","is_contra":false,"is_group":false}'
 
 # 3. Create journal entry (50000 = $500.00 in cents)
-curl -X POST https://fincore.fly.dev/api/v1/journal-entries \
+curl -X POST https://fincore-engine.fly.dev/api/v1/journal-entries \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
@@ -175,7 +175,7 @@ curl -X POST https://fincore.fly.dev/api/v1/journal-entries \
   }"
 
 # 4. Post the entry
-curl -X PATCH https://fincore.fly.dev/api/v1/journal-entries/$ENTRY_ID/post \
+curl -X PATCH https://fincore-engine.fly.dev/api/v1/journal-entries/$ENTRY_ID/post \
   -H "Content-Type: application/json" \
   -H "X-FinCore-Client-Id: $CLIENT_ID" \
   -H "X-FinCore-Client-Secret: $CLIENT_SECRET"
@@ -194,5 +194,5 @@ curl -X PATCH https://fincore.fly.dev/api/v1/journal-entries/$ENTRY_ID/post \
 
 ## Full Reference
 
-- Complete reference: https://fincore.fly.dev/llms-full.txt
-- OpenAPI spec: https://fincore.fly.dev/swagger/index.yaml
+- Complete reference: https://fincore-engine.fly.dev/llms-full.txt
+- OpenAPI spec: https://fincore-engine.fly.dev/swagger/index.yaml
