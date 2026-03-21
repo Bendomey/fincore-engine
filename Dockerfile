@@ -17,6 +17,7 @@ ENV PORT=8080
 WORKDIR /root/
 
 COPY --from=builder /app/build/main .
+COPY --from=builder /app/api ./api
 
 CMD ["./main"]
 EXPOSE 8080

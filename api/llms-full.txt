@@ -1,0 +1,460 @@
+# FinCore Engine — Full API Reference
+
+FinCore is a double-entry accounting engine. It enforces that every journal entry's total debits equal total credits. It supports multi-tenant operation (each "client" is an isolated tenant with its own chart of accounts and journal entries).
+
+## Base URLs
+
+| Environment | URL |
+|-------------|-----|
+| Production  | https://fincore.fly.dev |
+| Staging     | https://fincore-staging.fly.dev |
+| Local dev   | http://localhost:5002 |
+
+## Rate Limits
+
+- 100 requests per minute per IP address (unauthenticated and authenticated)
+- 50 requests per second per authenticated client (burst: 100)
+
+---
+
+## Authentication
+
+FinCore uses header-based API key authentication.
+
+### Step 1: Register a client (no auth required)
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/clients \
+  -H "Content-Type: application/json" \
+  -d '{"name": "My App", "email": "myapp@example.com"}'
+```
+
+Response:
+```json
+{
+  "data": {
+    "id": "7e2e0544-931c-4c07-a761-5ae95202d4e1",
+    "name": "My App",
+    "email": "myapp@example.com",
+    "client_id": "c_2d521294-a817-405d-b2a9-7580af3c774b",
+    "client_secret": "p68XtVzrZKkOrKB1gW8kAkUeeXxxEzHxwbsqEgcvJEY",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Important:** `client_secret` is only returned once at registration. Store it securely.
+
+### Step 2: Authenticate all subsequent requests
+
+Include both headers on every request:
+
+```
+X-FinCore-Client-Id: c_2d521294-a817-405d-b2a9-7580af3c774b
+X-FinCore-Client-Secret: p68XtVzrZKkOrKB1gW8kAkUeeXxxEzHxwbsqEgcvJEY
+```
+
+```sh
+curl https://fincore.fly.dev/api/v1/clients/me \
+  -H "X-FinCore-Client-Id: c_2d521294-..." \
+  -H "X-FinCore-Client-Secret: p68XtVzr..."
+```
+
+---
+
+## Response Patterns
+
+### Single resource
+```json
+{ "data": { ...resource fields... } }
+```
+
+### List resource
+```json
+{
+  "data": [ ...array of resources... ],
+  "meta": {
+    "page": 1,
+    "page_size": 10,
+    "order": "desc",
+    "order_by": "created_at",
+    "total": 42,
+    "has_next_page": true,
+    "has_previous_page": false
+  }
+}
+```
+
+### Error
+```json
+{ "errors": { "message": "description of the error" } }
+```
+
+### List query parameters (all list endpoints)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number |
+| `page_size` | integer | 10 | Items per page |
+| `order` | string | `desc` | Sort direction: `asc` or `desc` |
+| `order_by` | string | `created_at` | Field to sort by |
+| `query` | string | — | Search term |
+| `search_fields` | string | — | Comma-separated fields to search |
+| `start_date` | date | — | Filter by created_at >= start_date |
+| `end_date` | date | — | Filter by created_at <= end_date |
+| `populate` | string | — | Comma-separated relations to eager-load |
+
+---
+
+## Clients API
+
+### POST /api/v1/clients — Register a new client
+No authentication required. Creates a new isolated tenant.
+
+**Request body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Client name (3–255 chars) |
+| `email` | string | Yes | Client email address (unique) |
+
+**Response:** `201 Created` — returns the client object with `client_id` and `client_secret`.
+
+---
+
+### GET /api/v1/clients/me — Get current client
+Returns the authenticated client's details. `client_secret` is not returned after initial registration.
+
+**Response:** `200 OK`
+```json
+{
+  "data": {
+    "id": "uuid",
+    "name": "My App",
+    "email": "myapp@example.com",
+    "client_id": "c_...",
+    "client_secret": null,
+    "created_at": "...",
+    "updated_at": "..."
+  }
+}
+```
+
+---
+
+## Accounts API
+
+Accounts form a chart of accounts for your client. They support a hierarchy (group accounts contain child accounts) and five standard accounting types.
+
+### Account types
+- `ASSET` — Resources owned (cash, receivables, inventory)
+- `LIABILITY` — Obligations owed (payables, loans)
+- `EQUITY` — Owner's equity (capital, retained earnings)
+- `INCOME` — Revenue earned (sales, interest income)
+- `EXPENSE` — Costs incurred (rent, salaries, cost of goods)
+
+### POST /api/v1/accounts — Create an account
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/accounts \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: c_..." \
+  -H "X-FinCore-Client-Secret: ..." \
+  -d '{
+    "name": "Cash",
+    "type": "ASSET",
+    "is_contra": false,
+    "is_group": false
+  }'
+```
+
+**Request body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Account name (3–255 chars) |
+| `type` | enum | Yes | One of: ASSET, LIABILITY, EQUITY, INCOME, EXPENSE |
+| `is_contra` | boolean | Yes | True if this is a contra account (offsets its parent type) |
+| `is_group` | boolean | Yes | True if this account is a group/parent (cannot have journal entry lines) |
+| `parent_account_id` | UUID | No | ID of a parent group account |
+| `description` | string | No | Account description (3–255 chars) |
+
+**Response:** `201 Created`
+```json
+{
+  "data": {
+    "id": "uuid",
+    "code": "1001",
+    "name": "Cash",
+    "type": "ASSET",
+    "is_contra": false,
+    "is_group": false,
+    "description": null,
+    "parent_account_id": null,
+    "parent_account": null,
+    "created_at": "...",
+    "updated_at": "..."
+  }
+}
+```
+
+---
+
+### GET /api/v1/accounts — List accounts
+
+Additional filters beyond the standard list params:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `account_type` | enum | Filter by account type |
+| `is_contra` | boolean | Filter contra/non-contra accounts |
+| `is_group` | boolean | Filter group/non-group accounts |
+| `parent_account_id` | UUID | Filter by parent account |
+| `populate` | string | Use `ParentAccount` to include parent object |
+
+---
+
+### GET /api/v1/accounts/{account_id} — Get single account
+
+```sh
+curl https://fincore.fly.dev/api/v1/accounts/uuid \
+  -H "X-FinCore-Client-Id: c_..." \
+  -H "X-FinCore-Client-Secret: ..."
+```
+
+---
+
+### PATCH /api/v1/accounts/{account_id} — Update an account
+Only name and description can be updated after creation.
+
+**Request body (all fields optional):**
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | New account name (3–255 chars) |
+| `description` | string | New description (3–255 chars) |
+
+---
+
+### DELETE /api/v1/accounts/{account_id} — Delete an account
+
+Constraints:
+- Cannot delete a group account that still has child accounts
+- Cannot delete an account that has journal entry lines
+
+**Response:** `204 No Content`
+
+---
+
+## Journal Entries API
+
+Journal entries are the core of double-entry bookkeeping. Each entry contains 2+ lines, and **the sum of all debit amounts must equal the sum of all credit amounts**.
+
+### Journal entry lifecycle
+
+```
+DRAFT  →  POSTED
+```
+
+- `DRAFT`: Can be edited or deleted. Not yet finalized.
+- `POSTED`: Finalized and immutable. Cannot be deleted.
+
+To post a draft: `PATCH /api/v1/journal-entries/{id}/post`
+
+---
+
+### POST /api/v1/journal-entries — Create a journal entry
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/journal-entries \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: c_..." \
+  -H "X-FinCore-Client-Secret: ..." \
+  -d '{
+    "status": "DRAFT",
+    "reference": "INV-001",
+    "transaction_date": "2024-01-15",
+    "lines": [
+      { "account_id": "cash-account-uuid", "debit": 50000, "credit": 0, "notes": "Cash received" },
+      { "account_id": "revenue-account-uuid", "debit": 0, "credit": 50000, "notes": "Sales revenue" }
+    ]
+  }'
+```
+
+**Request body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `status` | enum | Yes | `DRAFT` or `POSTED` |
+| `reference` | string | Yes | Unique reference (e.g. invoice number, 3–255 chars) |
+| `transaction_date` | date | No | ISO 8601 date (e.g. `2024-01-15`) |
+| `metadata` | object | No | Arbitrary JSON for your own use |
+| `lines` | array | Yes | Minimum 2 lines; total debits must equal total credits |
+
+**Line fields:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `account_id` | UUID | Yes | The account this line posts to |
+| `debit` | number | Yes | Debit amount (integer cents/smallest unit; >= 0) |
+| `credit` | number | Yes | Credit amount (integer cents/smallest unit; >= 0) |
+| `notes` | string | No | Line-level notes (3–255 chars) |
+
+**Response:** `201 Created` — returns the full journal entry with lines.
+
+---
+
+### GET /api/v1/journal-entries — List journal entries
+
+Additional filters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `status` | enum | Filter by `DRAFT` or `POSTED` |
+| `populate` | string | Use `JournalEntryLines` and/or `Account` |
+
+---
+
+### GET /api/v1/journal-entries/{journal_entry_id} — Get single entry
+
+```sh
+curl "https://fincore.fly.dev/api/v1/journal-entries/uuid?populate=JournalEntryLines" \
+  -H "X-FinCore-Client-Id: c_..." \
+  -H "X-FinCore-Client-Secret: ..."
+```
+
+---
+
+### PATCH /api/v1/journal-entries/{journal_entry_id} — Update a draft entry
+Only DRAFT entries can be updated.
+
+**Request body (all fields optional):**
+| Field | Type | Description |
+|-------|------|-------------|
+| `reference` | string | New reference (3–255 chars) |
+| `transaction_date` | date | New transaction date |
+| `metadata` | object | New metadata |
+| `lines` | array | Replace all lines (min 2; debits must equal credits) |
+
+**Update line fields (all optional):**
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Line ID to update an existing line; omit to add a new line |
+| `account_id` | UUID | Account for this line |
+| `debit` | number | New debit amount |
+| `credit` | number | New credit amount |
+| `notes` | string | New notes |
+
+---
+
+### PATCH /api/v1/journal-entries/{journal_entry_id}/post — Post a draft entry
+Finalizes the entry. No request body needed. Only DRAFT entries can be posted.
+
+```sh
+curl -X PATCH https://fincore.fly.dev/api/v1/journal-entries/uuid/post \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: c_..." \
+  -H "X-FinCore-Client-Secret: ..."
+```
+
+**Response:** `200 OK` — returns the updated entry with `status: "POSTED"` and `posted_at` set.
+
+---
+
+### DELETE /api/v1/journal-entries/{journal_entry_id} — Delete a draft entry
+Only DRAFT entries can be deleted.
+
+**Response:** `204 No Content`
+
+---
+
+## Workflow: Recording a Sale
+
+This end-to-end example walks through registering, creating accounts, recording a sale as a journal entry, and posting it.
+
+### 1. Register your client
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/clients \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Acme Corp", "email": "acme@example.com"}'
+
+# Save the returned client_id and client_secret
+export CLIENT_ID="c_2d521294-..."
+export CLIENT_SECRET="p68XtVzr..."
+```
+
+### 2. Create a Cash account (ASSET)
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/accounts \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: $CLIENT_ID" \
+  -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
+  -d '{"name": "Cash", "type": "ASSET", "is_contra": false, "is_group": false}'
+
+# Save the returned id
+export CASH_ACCOUNT_ID="uuid-of-cash-account"
+```
+
+### 3. Create a Sales Revenue account (INCOME)
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/accounts \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: $CLIENT_ID" \
+  -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
+  -d '{"name": "Sales Revenue", "type": "INCOME", "is_contra": false, "is_group": false}'
+
+export REVENUE_ACCOUNT_ID="uuid-of-revenue-account"
+```
+
+### 4. Record the sale as a DRAFT journal entry
+
+A $500 cash sale: debit Cash (asset increases), credit Sales Revenue (income increases).
+
+```sh
+curl -X POST https://fincore.fly.dev/api/v1/journal-entries \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: $CLIENT_ID" \
+  -H "X-FinCore-Client-Secret: $CLIENT_SECRET" \
+  -d "{
+    \"status\": \"DRAFT\",
+    \"reference\": \"SALE-001\",
+    \"transaction_date\": \"2024-01-15\",
+    \"metadata\": {\"customer\": \"John Doe\", \"invoice\": \"INV-001\"},
+    \"lines\": [
+      {\"account_id\": \"$CASH_ACCOUNT_ID\", \"debit\": 50000, \"credit\": 0, \"notes\": \"Cash from sale\"},
+      {\"account_id\": \"$REVENUE_ACCOUNT_ID\", \"debit\": 0, \"credit\": 50000, \"notes\": \"Sale of goods\"}
+    ]
+  }"
+
+export JOURNAL_ENTRY_ID="uuid-of-journal-entry"
+```
+
+Note: amounts are in the smallest currency unit (e.g., cents). 50000 = $500.00.
+
+### 5. Post the journal entry
+
+```sh
+curl -X PATCH https://fincore.fly.dev/api/v1/journal-entries/$JOURNAL_ENTRY_ID/post \
+  -H "Content-Type: application/json" \
+  -H "X-FinCore-Client-Id: $CLIENT_ID" \
+  -H "X-FinCore-Client-Secret: $CLIENT_SECRET"
+```
+
+The entry is now `POSTED` and immutable.
+
+---
+
+## Double-Entry Rules
+
+- Every journal entry must have at least 2 lines
+- Sum of all `debit` values across all lines must equal sum of all `credit` values
+- Each line must have exactly one of debit or credit as non-zero (though both can be provided)
+- Amounts are integers (whole numbers) representing the smallest currency unit
+
+## Common Errors
+
+| HTTP Status | Meaning |
+|-------------|---------|
+| 400 | Bad request — see `errors.message` for details |
+| 401 | Unauthorized — missing or invalid auth headers |
+| 422 | Validation error — field-level validation failed |
+| 500 | Internal server error |
