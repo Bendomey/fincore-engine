@@ -12,7 +12,7 @@ info:
 servers:
   - url: http://localhost:5002
     description: Local development
-  - url: "https://fincore-staging.fly.dev"
+  - url: "https://fincore-engine.fly.dev"
     description: Staging API
   - url: "https://fincore-engine.fly.dev"
     description: Production API

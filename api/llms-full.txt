@@ -7,7 +7,7 @@ FinCore is a double-entry accounting engine. It enforces that every journal entr
 | Environment | URL |
 |-------------|-----|
 | Production  | https://fincore-engine.fly.dev |
-| Staging     | https://fincore-staging.fly.dev |
+| Staging     | https://fincore-engine.fly.dev |
 | Local dev   | http://localhost:5002 |
 
 ## Rate Limits

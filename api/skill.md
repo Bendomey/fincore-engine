@@ -11,7 +11,7 @@ When the user asks you to interact with FinCore, use the reference below to writ
 | Environment | URL |
 |-------------|-----|
 | Production  | https://fincore-engine.fly.dev |
-| Staging     | https://fincore-staging.fly.dev |
+| Staging     | https://fincore-engine.fly.dev |
 | Local dev   | http://localhost:5002 |
 
 ## Authentication

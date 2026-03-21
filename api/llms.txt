@@ -8,7 +8,7 @@
 ## API Basics
 
 - Base URL (production): https://fincore-engine.fly.dev
-- Base URL (staging): https://fincore-staging.fly.dev
+- Base URL (staging): https://fincore-engine.fly.dev
 - Base URL (local): http://localhost:5002
 - All requests and responses use Content-Type: application/json
 - Rate limits: 100 requests/min per IP; 50 requests/s per authenticated client
