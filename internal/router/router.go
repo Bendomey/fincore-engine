@@ -74,10 +74,24 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 	// serve openapi.yaml + docs
 	r.Handle("/swagger/*", http.StripPrefix("/swagger/", http.FileServer(http.Dir("./api/service-specs"))))
 
-	if appCtx.Config.Env != "production" {
-		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/html")
-			w.Write([]byte(`
+	// serve AI skill files
+	r.Get("/llms.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.ServeFile(w, r, "./api/llms.txt")
+	})
+	r.Get("/llms-full.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.ServeFile(w, r, "./api/llms-full.txt")
+	})
+	r.Get("/skill.md", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		http.ServeFile(w, r, "./api/skill.md")
+	})
+
+	// if appCtx.Config.Env != "production" {
+	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`
 <!DOCTYPE html>
 <html>
   <head>
@@ -98,8 +112,8 @@ func New(appCtx pkg.AppContext) *chi.Mux {
   </body>
 </html>
 	`))
-		})
-	}
+	})
+	// }
 
 	return r
 }

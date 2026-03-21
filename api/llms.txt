@@ -1,0 +1,45 @@
+# FinCore Engine API
+
+> FinCore is a double-entry accounting engine exposed as a REST API.
+> It manages clients, chart of accounts, and journal entries with full
+> double-entry bookkeeping enforcement (debits must equal credits).
+> Suitable for fintech, ERP, and bookkeeping integrations.
+
+## API Basics
+
+- Base URL (production): https://fincore.fly.dev
+- Base URL (staging): https://fincore-staging.fly.dev
+- Base URL (local): http://localhost:5002
+- All requests and responses use Content-Type: application/json
+- Rate limits: 100 requests/min per IP; 50 requests/s per authenticated client
+
+## Authentication
+
+- **Registration** (no auth required): `POST /api/v1/clients` with `{"name": "...", "email": "..."}`
+- Response returns `client_id` and `client_secret` — the secret is only returned once
+- All subsequent requests require both headers:
+  - `X-FinCore-Client-Id: <client_id>`
+  - `X-FinCore-Client-Secret: <client_secret>`
+
+## Resources
+
+- **Clients**: Registration and identity
+  - `POST /api/v1/clients` — register (no auth)
+  - `GET /api/v1/clients/me` — get current client info (auth required)
+
+- **Accounts**: Chart of accounts with hierarchical support
+  - Types: ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
+  - `POST/GET /api/v1/accounts`
+  - `GET/PATCH/DELETE /api/v1/accounts/{account_id}`
+
+- **Journal Entries**: Double-entry transactions
+  - Status lifecycle: DRAFT → POSTED
+  - `POST/GET /api/v1/journal-entries`
+  - `GET/PATCH/DELETE /api/v1/journal-entries/{journal_entry_id}`
+  - `PATCH /api/v1/journal-entries/{journal_entry_id}/post` — finalize a draft
+
+## Documentation
+
+- [Full AI Reference](https://fincore.fly.dev/llms-full.txt)
+- [Claude Code Skill](https://fincore.fly.dev/skill.md)
+- [OpenAPI 3.0.3 Spec](https://fincore.fly.dev/swagger/index.yaml)

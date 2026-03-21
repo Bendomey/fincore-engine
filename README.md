@@ -83,5 +83,35 @@ To initialize or update the database schema, run:
 - Sentry integration for error monitoring
 - Environment-based configuration
 
+## AI Integration
+
+FinCore serves AI-friendly skill files so your coding assistant can help you integrate with the API. These files are kept in the repo and updated with every API release.
+
+### For any AI assistant (llms.txt)
+```sh
+# Lightweight summary
+curl https://fincore.fly.dev/llms.txt
+
+# Full API reference
+curl https://fincore.fly.dev/llms-full.txt
+```
+
+### For Claude Code
+```sh
+# Download the skill file into your project
+mkdir -p .claude/commands
+curl -o .claude/commands/fincore.md https://fincore.fly.dev/skill.md
+
+# Then in Claude Code, type:
+/fincore
+```
+
+Claude Code will load the full API reference into context and can help you write integration code, construct requests, debug responses, and more.
+
+### OpenAPI Spec
+```sh
+curl https://fincore.fly.dev/swagger/index.yaml
+```
+
 ---
 For more details, see the code in `internal/handlers`, `internal/services`, and `internal/models`.
