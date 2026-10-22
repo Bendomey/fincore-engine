@@ -1,9 +1,9 @@
 name: search_fields
-description: A comma-separated list of fields to search in
+description: >-
+  A comma-separated list of fields to search in. Accounts accept code, name, description.
+  Journal entries accept reference. Any other value returns 400.
 in: query
 required: false
 schema:
   type: string
-  example: "name,email"
-
-  
+  example: "name,code"

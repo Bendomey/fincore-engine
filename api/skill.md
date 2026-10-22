@@ -38,6 +38,8 @@ curl -X POST https://fincore-engine.fly.dev/api/v1/clients \
 
 `page`, `page_size`, `order` (asc/desc), `order_by`, `query`, `search_fields`, `start_date`, `end_date`, `populate`
 
+`order_by`, `search_fields` and `populate` only accept the values listed per endpoint below; anything else returns 400.
+
 ---
 
 ## Clients API
@@ -67,9 +69,12 @@ Account types: `ASSET`, `LIABILITY`, `EQUITY`, `INCOME`, `EXPENSE`
 }
 ```
 
+Codes are generated per client: the first ASSET account is `1000`, then `1001`, and so on (LIABILITY 2000, EQUITY 3000, INCOME 4000, EXPENSE 5000).
+
 ### GET /api/v1/accounts
 Extra filters: `account_type`, `is_contra`, `is_group`, `parent_account_id`
 Populate: `ParentAccount`
+`order_by`: `created_at`, `updated_at`, `code`, `name`, `type` · `search_fields`: `code`, `name`, `description`
 
 ### GET /api/v1/accounts/{account_id}
 Populate: `ParentAccount`
@@ -78,6 +83,11 @@ Populate: `ParentAccount`
 ```json
 { "name": "string (optional)", "description": "string (optional)" }
 ```
+Fields you omit are left unchanged.
+
+### GET /api/v1/accounts/{account_id}/ledger
+Posted lines on the account in transaction-date order, with `opening_balance`, `closing_balance` and a `running_balance` per line (on the account's normal side, continuing across pages).
+Params: `start_date`, `end_date` (YYYY-MM-DD or RFC3339; a date-only `end_date` includes that day), `page`, `page_size` (default 50, max 200). 404 for group accounts.
 
 ### DELETE /api/v1/accounts/{account_id}
 - Cannot delete a group account with child accounts
@@ -94,8 +104,8 @@ Rule: **sum of debits must equal sum of credits across all lines**
 ```json
 {
   "status": "DRAFT|POSTED (required)",
-  "reference": "string (required, 3-255)",
-  "transaction_date": "YYYY-MM-DD (optional)",
+  "reference": "string (required, 3-255, unique per client)",
+  "transaction_date": "YYYY-MM-DD or RFC3339 (optional, defaults to now)",
   "metadata": "object (optional)",
   "lines": [
     {
@@ -107,11 +117,14 @@ Rule: **sum of debits must equal sum of credits across all lines**
   ]
 }
 ```
-Minimum 2 lines required.
+Rules: at least 2 lines; each line has exactly one of `debit` or `credit` above zero; the total can't be zero; accounts must be your own non-group accounts.
+
+A reference you've already used returns **409** with the existing entry's id in `errors.journal_entry_id`, so a retried create can treat 409 as success.
 
 ### GET /api/v1/journal-entries
-Extra filters: `status`
-Populate: `JournalEntryLines`, `Account`
+Extra filters: `status`, `account_id` (entries with a line on that account), `reference` (exact)
+Populate: `JournalEntryLines`, `Account` (lines with their accounts)
+`order_by`: `created_at`, `updated_at`, `transaction_date`, `posted_at`, `reference` · `search_fields`: `reference`
 
 ### GET /api/v1/journal-entries/{journal_entry_id}
 
@@ -139,6 +152,16 @@ Finalizes the entry. No request body. Only DRAFT entries.
 
 ### DELETE /api/v1/journal-entries/{journal_entry_id}
 Only DRAFT entries can be deleted.
+
+---
+
+## Reports API
+
+### GET /api/v1/reports/trial-balance
+Every non-group account with `total_debit`, `total_credit`, `normal_balance` and `balance`, plus grand totals. Only POSTED entries count. ASSET and EXPENSE are debit-normal, others credit-normal; contra accounts are the opposite.
+Param: `as_of` (YYYY-MM-DD includes that day, or RFC3339; defaults to now).
+
+To reverse a posted entry, post a new entry with the debits and credits swapped.
 
 ---
 
@@ -189,7 +212,10 @@ curl -X PATCH https://fincore-engine.fly.dev/api/v1/journal-entries/$ENTRY_ID/po
 |--------|---------|
 | 400 | Bad request — see `errors.message` |
 | 401 | Missing or invalid auth headers |
+| 404 | Not found, or belongs to another client |
+| 409 | Journal entry reference already used — `errors.journal_entry_id` is the existing entry |
 | 422 | Validation error |
+| 429 | Rate limited: 50/s per client; 100/min per IP for requests that don't authenticate; failed auths 20/min per IP and client |
 | 500 | Internal server error |
 
 ## Full Reference

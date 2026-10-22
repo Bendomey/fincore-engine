@@ -48,7 +48,10 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: deploy-group
     needs: [changes, sync-db]
-    if: ${{ always() && (needs.changes.result == 'success') }}
+    # Deploy only when migrations succeeded, or were skipped because nothing under init/ changed
+    if: >-
+      ${{ always() && needs.changes.result == 'success' &&
+      (needs.sync-db.result == 'success' || needs.sync-db.result == 'skipped') }}
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:

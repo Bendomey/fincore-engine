@@ -11,7 +11,8 @@
 - Base URL (staging): https://fincore-engine.fly.dev
 - Base URL (local): http://localhost:5002
 - All requests and responses use Content-Type: application/json
-- Rate limits: 100 requests/min per IP; 50 requests/s per authenticated client
+- Rate limits: 50 requests/s per client; 100 requests/min per IP for requests that don't authenticate; failed auths are limited per IP and client
+- Amounts are integers in the smallest currency unit; dates accept YYYY-MM-DD or RFC3339
 
 ## Authentication
 
@@ -31,12 +32,19 @@
   - Types: ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
   - `POST/GET /api/v1/accounts`
   - `GET/PATCH/DELETE /api/v1/accounts/{account_id}`
+  - `GET /api/v1/accounts/{account_id}/ledger` — posted lines with opening, running and closing balances
+  - Codes are generated per client (ASSET 1000, 1001, …)
 
 - **Journal Entries**: Double-entry transactions
   - Status lifecycle: DRAFT → POSTED
   - `POST/GET /api/v1/journal-entries`
   - `GET/PATCH/DELETE /api/v1/journal-entries/{journal_entry_id}`
   - `PATCH /api/v1/journal-entries/{journal_entry_id}/post` — finalize a draft
+  - References are unique per client; reusing one returns 409 with the existing entry's id (safe retries)
+  - List filters: `status`, `account_id`, `reference`
+
+- **Reports**
+  - `GET /api/v1/reports/trial-balance?as_of=` — every non-group account's posted totals and balance
 
 ## Documentation
 

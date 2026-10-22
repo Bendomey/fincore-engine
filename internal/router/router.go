@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-chi/httprate"
 
 	"github.com/Bendomey/fincore-engine/pkg"
 )
@@ -25,7 +24,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			"User-Agent",
 			"Content-Type",
@@ -47,13 +46,12 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	// Rate limit: max 100 requests per minute per IP.
-	r.Use(httprate.LimitByIP(100, 1*time.Minute))
-
-	r.Use(appMiddleware.VerifyAuthMiddleware(appCtx))
-
-	// rate limit for authed routes
+	// Requests naming a client are limited per client id before auth, failed
+	// auths are limited per IP inside auth, and anything that didn't
+	// authenticate is limited to 100 per minute per IP.
 	r.Use(appMiddleware.RateLimitMiddleware)
+	r.Use(appMiddleware.VerifyAuthMiddleware(appCtx))
+	r.Use(appMiddleware.AnonymousIPRateLimitMiddleware(100, 1*time.Minute))
 
 	r.Use(middleware.AllowContentEncoding("deflate", "gzip"))
 	r.Use(middleware.AllowContentType("application/json"))
@@ -69,6 +67,7 @@ func New(appCtx pkg.AppContext) *chi.Mux {
 		r.Mount("/clients", NewClientRouter(appCtx))               // clients
 		r.Mount("/accounts", NewAccountRouter(appCtx))             // accounts
 		r.Mount("/journal-entries", NewJournalEntryRouter(appCtx)) // journalentries
+		r.Mount("/reports", NewReportRouter(appCtx))               // reports
 	})
 
 	// serve openapi.yaml + docs

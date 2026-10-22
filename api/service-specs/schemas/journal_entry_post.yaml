@@ -14,8 +14,7 @@ properties:
   transaction_date:
     example: 2023-01-01
     type: string
-    format: date
-    description: The date of the transaction.
+    description: The date of the transaction, as YYYY-MM-DD or RFC3339. Defaults to now.
     nullable: true
 
   metadata:

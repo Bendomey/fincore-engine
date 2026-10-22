@@ -9,6 +9,7 @@ type Handlers struct {
 	ClientHandler       ClientHandler
 	AccountHandler      AccountHandler
 	JournalEntryHandler JournalEntryHandler
+	ReportHandler       ReportHandler
 }
 
 func NewHandlers(services services.Services, validate *validator.Validate) Handlers {
@@ -16,9 +17,12 @@ func NewHandlers(services services.Services, validate *validator.Validate) Handl
 	accountHandler := NewAccountHandler(services.AccountService, validate)
 	journalEntryHandler := NewJournalEntryHandler(services.JournalEntryService, validate)
 
+	reportHandler := NewReportHandler(services.ReportService, validate)
+
 	return Handlers{
 		ClientHandler:       clientHandler,
 		AccountHandler:      accountHandler,
 		JournalEntryHandler: journalEntryHandler,
+		ReportHandler:       reportHandler,
 	}
 }

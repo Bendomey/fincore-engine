@@ -35,7 +35,9 @@ func ServiceAutoMigration(db *gorm.DB) error {
 		// Add more jobs, etc here
 		return nil
 	})
-	m.Migrate()
+	if err := m.Migrate(); err != nil {
+		return fmt.Errorf("[Migration.InitSchema]: %v", err)
+	}
 
 	if err := updateMigration(db); err != nil {
 		return err
@@ -43,8 +45,11 @@ func ServiceAutoMigration(db *gorm.DB) error {
 
 	m = gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
 		jobs.SeedExample(),
+		jobs.PerClientCodesAndUniqueReferences(),
 	})
-	m.Migrate()
+	if err := m.Migrate(); err != nil {
+		return fmt.Errorf("[Migration.Jobs]: %v", err)
+	}
 
 	return nil
 }

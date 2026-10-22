@@ -18,6 +18,8 @@ type AccountRepository interface {
 	GetByIDAndClientID(ctx context.Context, id string, clientID string, populate *[]string) (*models.Account, error)
 	List(context context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (*[]models.Account, error)
 	Count(context context.Context, filterQuery lib.FilterQuery, filters ListAccountsFilter) (int64, error)
+	MaxCode(ctx context.Context, clientID string, accountType string) (*int64, error)
+	FirstFreeCode(ctx context.Context, clientID string, from int64) (*int64, error)
 }
 
 type accountRepository struct {
@@ -124,7 +126,7 @@ func (r *accountRepository) List(
 			ParentAccountFilterScope(filters.ParentAccountId),
 			AccountTypeFilterScope(filters.AccountType),
 			IsContraFilterScope(filters.IsContra),
-			IsGroupFilterScope(filters.IsContra),
+			IsGroupFilterScope(filters.IsGroup),
 			SearchScope("accounts", filterQuery.Search),
 
 			PaginationScope(filterQuery.Page, filterQuery.PageSize),
@@ -162,7 +164,7 @@ func (r *accountRepository) Count(
 			ParentAccountFilterScope(filters.ParentAccountId),
 			AccountTypeFilterScope(filters.AccountType),
 			IsContraFilterScope(filters.IsContra),
-			IsGroupFilterScope(filters.IsContra),
+			IsGroupFilterScope(filters.IsGroup),
 			SearchScope("accounts", filterQuery.Search),
 		).
 		Count(&count)
@@ -212,4 +214,38 @@ func ParentAccountFilterScope(parentAccountId *string) func(db *gorm.DB) *gorm.D
 
 		return db.Where("accounts.parent_account_id = ?", *parentAccountId)
 	}
+}
+
+// MaxCode returns the client's highest numeric code for an account type,
+// including soft-deleted accounts (their codes stay reserved), or nil if none.
+func (r *accountRepository) MaxCode(ctx context.Context, clientID string, accountType string) (*int64, error) {
+	var maxCode *int64
+	result := r.DB.WithContext(ctx).
+		Unscoped().
+		Model(&models.Account{}).
+		Select("MAX(code::bigint)").
+		Where("client_id = ? AND type = ? AND code ~ '^[0-9]+$'", clientID, accountType).
+		Scan(&maxCode)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return maxCode, nil
+}
+
+// FirstFreeCode returns the lowest code at or above from that no account of
+// the client uses (any type, including soft-deleted), or nil if the next 1000
+// codes are all taken.
+func (r *accountRepository) FirstFreeCode(ctx context.Context, clientID string, from int64) (*int64, error) {
+	var free *int64
+	result := r.DB.WithContext(ctx).Raw(`
+SELECT MIN(c) FROM generate_series(CAST(@from AS bigint), CAST(@from AS bigint) + 999) AS c
+WHERE NOT EXISTS (SELECT 1 FROM accounts a WHERE a.client_id = @client AND a.code = c::text)`,
+		map[string]any{"from": from, "client": clientID},
+	).Scan(&free)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return free, nil
 }

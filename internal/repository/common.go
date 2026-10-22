@@ -24,24 +24,22 @@ func SearchScope(tableName string, search *lib.Search) func(db *gorm.DB) *gorm.D
 			return db
 		}
 
-		results := db
+		// Group the ORs so the other scopes (notably the client filter) are
+		// ANDed with the whole search, not just its first field.
+		group := db.Session(&gorm.Session{NewDB: true})
+		pattern := fmt.Sprintf("%%%s%%", search.Query)
 
 		for index, singleQuery := range search.SearchFields {
+			condition := fmt.Sprintf("%s.%s ILIKE ?", tableName, singleQuery)
 			if index == 0 {
-				results = results.Where(
-					fmt.Sprintf("%s.%s ILIKE ?", tableName, singleQuery),
-					fmt.Sprintf("%%%s%%", search.Query),
-				)
+				group = group.Where(condition, pattern)
 				continue
 			}
 
-			results = results.Or(
-				fmt.Sprintf("%s.%s ILIKE ?", tableName, singleQuery),
-				fmt.Sprintf("%%%s%%", search.Query),
-			)
+			group = group.Or(condition, pattern)
 		}
 
-		return results
+		return db.Where(group)
 	}
 }
 
@@ -65,7 +63,7 @@ func OrderScope(tableName string, orderBy string, order string) func(db *gorm.DB
 			return db.Order(fmt.Sprintf("%s.created_at desc", tableName))
 		}
 
-		return db.Order(fmt.Sprintf("%s %s", orderBy, order))
+		return db.Order(fmt.Sprintf("%s.%s %s", tableName, orderBy, order))
 	}
 }
 

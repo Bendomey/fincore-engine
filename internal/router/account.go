@@ -16,6 +16,7 @@ func NewAccountRouter(appCtx pkg.AppContext) *chi.Mux {
 	r.Get("/", appCtx.Handlers.AccountHandler.ListAccounts)
 
 	r.Get("/{account_id}", appCtx.Handlers.AccountHandler.GetAccount)
+	r.Get("/{account_id}/ledger", appCtx.Handlers.ReportHandler.AccountLedger)
 	r.Patch("/{account_id}", appCtx.Handlers.AccountHandler.UpdateAccount)
 	r.Delete("/{account_id}", appCtx.Handlers.AccountHandler.DeleteAccount)
 

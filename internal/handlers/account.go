@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/Bendomey/fincore-engine/internal/lib"
@@ -10,6 +11,7 @@ import (
 	"github.com/Bendomey/fincore-engine/internal/transformations"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 type AccountHandler struct {
@@ -93,10 +95,23 @@ func (h *AccountHandler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, err := h.service.UpdateAccount(r.Context(), chi.URLParam(r, "account_id"), services.UpdateAccountInput{
+	client, clientOk := lib.ClientFromContext(r.Context())
+
+	if !clientOk {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	account, err := h.service.UpdateAccount(r.Context(), services.UpdateAccountInput{
+		ClientID:    client.ID.String(),
+		ID:          chi.URLParam(r, "account_id"),
 		Name:        body.Name,
 		Description: body.Description,
 	})
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		writeError(w, http.StatusNotFound, "account not found")
+		return
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -125,6 +140,10 @@ func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 		ClientID: client.ID.String(),
 		ID:       chi.URLParam(r, "account_id"),
 	})
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		writeError(w, http.StatusNotFound, "account not found")
+		return
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]any{
@@ -142,7 +161,7 @@ func (h *AccountHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 type GetAccountRequest struct {
 	ClientID string    `json:"client_id" validate:"required,uuid4"`
 	ID       string    `json:"name"      validate:"required,uuid4"`
-	Populate *[]string `json:"populate"  validate:"omitempty,dive,oneof=ParentAccount"`
+	Populate *[]string `json:"populate"  validate:"omitempty"`
 }
 
 func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
@@ -164,6 +183,13 @@ func (h *AccountHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	if !isPassedValidation {
 		return
 	}
+
+	populate, populateErr := lib.RestrictPopulate(input.Populate, accountListOptions.Populate)
+	if populateErr != nil {
+		writeError(w, http.StatusBadRequest, populateErr.Error())
+		return
+	}
+	input.Populate = populate
 
 	account, err := h.service.GetAccount(r.Context(), services.GetAccountInput{
 		ClientID: input.ClientID,
@@ -228,6 +254,11 @@ func (h *AccountHandler) ListAccounts(w http.ResponseWriter, r *http.Request) {
 
 	isFilterQueryPassedValidation := lib.ValidateRequest(h.validate, filterQuery, w)
 	if !isFilterQueryPassedValidation {
+		return
+	}
+
+	if restrictErr := filterQuery.Restrict(accountListOptions); restrictErr != nil {
+		writeError(w, http.StatusBadRequest, restrictErr.Error())
 		return
 	}
 

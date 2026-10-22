@@ -1,0 +1,9 @@
+name: end_date
+description: >-
+  Last day of the ledger (YYYY-MM-DD includes that whole day, or RFC3339), by transaction date.
+  Defaults to now.
+in: query
+required: false
+schema:
+  type: string
+  example: "2026-12-31"

@@ -16,9 +16,9 @@ func NewJournalEntryRouter(appCtx pkg.AppContext) *chi.Mux {
 	r.Get("/", appCtx.Handlers.JournalEntryHandler.ListJournalEntries)
 
 	r.Get("/{journal_entry_id}", appCtx.Handlers.JournalEntryHandler.GetJournalEntry)
-	r.Patch("/{account_id}", appCtx.Handlers.JournalEntryHandler.UpdateJournalEntry)
+	r.Patch("/{journal_entry_id}", appCtx.Handlers.JournalEntryHandler.UpdateJournalEntry)
 	r.Patch("/{journal_entry_id}/post", appCtx.Handlers.JournalEntryHandler.PostJournalEntry)
-	r.Delete("/{account_id}", appCtx.Handlers.JournalEntryHandler.DeleteJournalEntry)
+	r.Delete("/{journal_entry_id}", appCtx.Handlers.JournalEntryHandler.DeleteJournalEntry)
 
 	return r
 }

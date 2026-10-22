@@ -1,0 +1,52 @@
+type: object
+description: An account's posted lines in transaction-date order, with running balances on its normal side.
+properties:
+  account:
+    $ref: ./account.yaml
+  start_date:
+    type: string
+    format: date-time
+    nullable: true
+  end_date:
+    type: string
+    format: date-time
+  normal_balance:
+    type: string
+    enum: [DEBIT, CREDIT]
+  opening_balance:
+    type: integer
+    format: int64
+    description: Balance before start_date (0 when start_date is omitted).
+  closing_balance:
+    type: integer
+    format: int64
+    description: Balance at end_date, across all pages.
+  lines:
+    type: array
+    items:
+      type: object
+      properties:
+        line_id:
+          type: string
+          format: uuid4
+        journal_entry_id:
+          type: string
+          format: uuid4
+        reference:
+          type: string
+        transaction_date:
+          type: string
+          format: date-time
+        notes:
+          type: string
+          nullable: true
+        debit:
+          type: integer
+          format: int64
+        credit:
+          type: integer
+          format: int64
+        running_balance:
+          type: integer
+          format: int64
+          description: Balance after this line; continues across pages.

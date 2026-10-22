@@ -21,7 +21,7 @@ func DBClientToRestClient(i *models.Client, secret *string) interface{} {
 
 	// don't send this as output if it doesn't exist.
 	if secret != nil {
-		data["clientSecret"] = secret
+		data["client_secret"] = secret
 	}
 
 	return data

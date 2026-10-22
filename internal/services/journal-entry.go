@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Bendomey/fincore-engine/internal/lib"
@@ -30,6 +31,36 @@ type JournalEntryService interface {
 		filterQuery lib.FilterQuery,
 		filters repository.ListJournalEntriesFilter,
 	) (int64, error)
+}
+
+// DuplicateReferenceError means the client already has a live entry with the
+// requested reference. Callers retrying a create can treat it as success.
+type DuplicateReferenceError struct {
+	ExistingID string
+}
+
+func (e *DuplicateReferenceError) Error() string {
+	return "a journal entry with this reference already exists"
+}
+
+// duplicateReference returns a DuplicateReferenceError if another live entry
+// of the client uses reference.
+func (s *journalEntryService) duplicateReference(
+	ctx context.Context,
+	clientID string,
+	reference string,
+	exceptID string,
+) error {
+	existing, err := s.repo.GetByReference(ctx, clientID, reference)
+	if err != nil {
+		return err
+	}
+
+	if existing != nil && existing.ID.String() != exceptID {
+		return &DuplicateReferenceError{ExistingID: existing.ID.String()}
+	}
+
+	return nil
 }
 
 type journalEntryService struct {
@@ -78,9 +109,13 @@ func (s *journalEntryService) CreateJournalEntry(
 		})
 	}
 
-	validateLinesErr := validateLines(s.account, ctx, lines)
+	validateLinesErr := validateLines(ctx, s.account, input.ClientID, lines)
 	if validateLinesErr != nil {
 		return nil, validateLinesErr
+	}
+
+	if dupErr := s.duplicateReference(ctx, input.ClientID, input.Reference, ""); dupErr != nil {
+		return nil, dupErr
 	}
 
 	journalEntry := models.JournalEntry{
@@ -95,8 +130,9 @@ func (s *journalEntryService) CreateJournalEntry(
 		journalEntry.PostedAt = &now
 	}
 
+	journalEntry.TransactionDate = time.Now()
 	if input.TransactionDate != nil {
-		t, err := time.Parse(time.RFC3339, *input.TransactionDate)
+		t, err := lib.ParseDateParam(*input.TransactionDate, false)
 		if err != nil {
 			return nil, errors.New("invalid transaction date format")
 		}
@@ -114,6 +150,12 @@ func (s *journalEntryService) CreateJournalEntry(
 	}
 
 	err := s.repo.Create(ctx, &journalEntry)
+	if lib.IsUniqueViolation(err) {
+		// A concurrent create with the same reference won the race.
+		if dupErr := s.duplicateReference(ctx, input.ClientID, input.Reference, ""); dupErr != nil {
+			return nil, dupErr
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -122,28 +164,48 @@ func (s *journalEntryService) CreateJournalEntry(
 }
 
 func validateLines(
-	accountRepo repository.AccountRepository,
 	ctx context.Context,
+	accountRepo repository.AccountRepository,
+	clientID string,
 	lines []models.JournalEntryLine,
 ) error {
-	// make sure debits equal credits
+	if len(lines) < 2 {
+		return errors.New("a journal entry needs at least two lines")
+	}
+
 	debitTotal := int64(0)
 	creditTotal := int64(0)
 
 	for _, line := range lines {
+		if line.Debit < 0 || line.Credit < 0 {
+			return errors.New("debit and credit amounts cannot be negative")
+		}
+
+		if (line.Debit > 0) == (line.Credit > 0) {
+			return errors.New("each line must have either a debit or a credit")
+		}
+
 		debitTotal += line.Debit
 		creditTotal += line.Credit
+	}
+
+	if debitTotal == 0 {
+		return errors.New("journal entry total must be greater than zero")
 	}
 
 	if debitTotal != creditTotal {
 		return errors.New("debit and credit totals must be equal")
 	}
 
-	// make sure accounts exist and belong to the client
+	// accounts must belong to the client and accept postings
 	for _, line := range lines {
-		_, err := accountRepo.GetByID(ctx, line.AccountID, nil)
+		account, err := accountRepo.GetByIDAndClientID(ctx, line.AccountID, clientID, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("account %s not found", line.AccountID)
+		}
+
+		if account.IsGroup {
+			return fmt.Errorf("cannot post to group account %s", account.Code)
 		}
 	}
 
@@ -182,12 +244,16 @@ func (s *journalEntryService) UpdateJournalEntry(
 		return nil, errors.New("journal entry is already posted")
 	}
 
-	if input.Reference != nil {
+	if input.Reference != nil && *input.Reference != entry.Reference {
+		if dupErr := s.duplicateReference(ctx, input.ClientID, *input.Reference, entry.ID.String()); dupErr != nil {
+			return nil, dupErr
+		}
+
 		entry.Reference = *input.Reference
 	}
 
 	if input.TransactionDate != nil {
-		t, err := time.Parse(time.RFC3339, *input.TransactionDate)
+		t, err := lib.ParseDateParam(*input.TransactionDate, false)
 		if err != nil {
 			return nil, errors.New("invalid transaction date format")
 		}
@@ -247,7 +313,7 @@ func (s *journalEntryService) UpdateJournalEntry(
 		}
 
 		// validate lines
-		validateLinesErr := validateLines(s.account, ctx, lines)
+		validateLinesErr := validateLines(ctx, s.account, input.ClientID, lines)
 		if validateLinesErr != nil {
 			return nil, validateLinesErr
 		}
@@ -280,13 +346,19 @@ func (s *journalEntryService) PostJournalEntry(
 	ctx context.Context,
 	input GetJournalEntryInput,
 ) (*models.JournalEntry, error) {
-	entry, err := s.repo.GetByIDAndClientID(ctx, input.ID, input.ClientID, input.Populate)
+	entry, err := s.repo.GetByIDAndClientID(ctx, input.ID, input.ClientID, &[]string{"JournalEntryLines"})
 	if err != nil {
 		return nil, err
 	}
 
 	if entry.Status == "POSTED" {
 		return nil, errors.New("journal entry is already posted")
+	}
+
+	// Drafts may predate the line rules, and PATCH only checks the lines it
+	// sends, so the whole entry is checked before it reaches the books.
+	if validateErr := validateLines(ctx, s.account, input.ClientID, entry.JournalEntryLines); validateErr != nil {
+		return nil, validateErr
 	}
 
 	now := time.Now()

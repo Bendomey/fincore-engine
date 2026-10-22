@@ -1,0 +1,9 @@
+name: as_of
+description: >-
+  Include posted entries dated before this point. A date (YYYY-MM-DD) includes that whole day;
+  an RFC3339 timestamp is used as given. Defaults to now.
+in: query
+required: false
+schema:
+  type: string
+  example: "2026-10-31"
