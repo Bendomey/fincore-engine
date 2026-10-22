@@ -1,9 +1,10 @@
 name: order_by
-description: The field to order accounts by
+description: >-
+  The field to order by. Accounts accept created_at, updated_at, code, name, type.
+  Journal entries accept created_at, updated_at, transaction_date, posted_at, reference.
+  Any other value returns 400.
 in: query
 required: false
 schema:
   type: string
   example: "created_at"
-
-  

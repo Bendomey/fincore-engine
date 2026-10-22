@@ -12,8 +12,10 @@ FinCore is a double-entry accounting engine. It enforces that every journal entr
 
 ## Rate Limits
 
-- 100 requests per minute per IP address (unauthenticated and authenticated)
-- 50 requests per second per authenticated client (burst: 100)
+- 50 requests per second per client, for requests with `X-FinCore-Client-Id`
+- 100 requests per minute per IP address, for requests that don't authenticate
+- Failed authentications: 20 per minute per IP and client, and 300 per minute per IP; past either, credentialed requests from that IP (and client) get `429` for the rest of the window
+- Exceeding any limit returns `429 Too Many Requests`
 
 ---
 
@@ -105,6 +107,11 @@ curl https://fincore-engine.fly.dev/api/v1/clients/me \
 | `end_date` | date | — | Filter by created_at <= end_date |
 | `populate` | string | — | Comma-separated relations to eager-load |
 
+`order_by`, `search_fields` and `populate` only accept the values listed for each endpoint; anything else returns `400`.
+
+- Accounts — `order_by`: `created_at`, `updated_at`, `code`, `name`, `type`; `search_fields`: `code`, `name`, `description`; `populate`: `ParentAccount`
+- Journal entries — `order_by`: `created_at`, `updated_at`, `transaction_date`, `posted_at`, `reference`; `search_fields`: `reference`; `populate`: `JournalEntryLines`, `Account` (lines with their accounts)
+
 ---
 
 ## Clients API
@@ -118,7 +125,7 @@ No authentication required. Creates a new isolated tenant.
 | `name` | string | Yes | Client name (3–255 chars) |
 | `email` | string | Yes | Client email address (unique) |
 
-**Response:** `201 Created` — returns the client object with `client_id` and `client_secret`.
+**Response:** `201 Created` — returns the client object with `client_id` and `client_secret` (the secret is returned only here).
 
 ---
 
@@ -178,12 +185,14 @@ curl -X POST https://fincore-engine.fly.dev/api/v1/accounts \
 | `parent_account_id` | UUID | No | ID of a parent group account |
 | `description` | string | No | Account description (3–255 chars) |
 
+Codes are generated per client: one above the client's highest code for the type, starting at ASSET `1000`, LIABILITY `2000`, EQUITY `3000`, INCOME `4000`, EXPENSE `5000`.
+
 **Response:** `201 Created`
 ```json
 {
   "data": {
     "id": "uuid",
-    "code": "1001",
+    "code": "1000",
     "name": "Cash",
     "type": "ASSET",
     "is_contra": false,
@@ -224,7 +233,7 @@ curl https://fincore-engine.fly.dev/api/v1/accounts/uuid \
 ---
 
 ### PATCH /api/v1/accounts/{account_id} — Update an account
-Only name and description can be updated after creation.
+Only name and description can be updated after creation. Fields you omit are left unchanged. Another client's account returns `404`.
 
 **Request body (all fields optional):**
 | Field | Type | Description |
@@ -237,10 +246,53 @@ Only name and description can be updated after creation.
 ### DELETE /api/v1/accounts/{account_id} — Delete an account
 
 Constraints:
+- Returns `404` if the account doesn't exist (or was already deleted) or belongs to another client
 - Cannot delete a group account that still has child accounts
 - Cannot delete an account that has journal entry lines
 
 **Response:** `204 No Content`
+
+---
+
+### GET /api/v1/accounts/{account_id}/ledger — Account ledger
+
+Posted lines on one account, in transaction-date order. Only `POSTED` entries count.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `start_date` | date or RFC3339 | Lines before it form `opening_balance`. Omit to start from the first posting. |
+| `end_date` | date or RFC3339 | A date-only value includes that whole day. Defaults to now. |
+| `page` | integer | Default 1 |
+| `page_size` | integer | Default 50, max 200 |
+
+**Response:** `200 OK`
+```json
+{
+  "data": {
+    "account": { "id": "uuid", "code": "1000", "name": "Cash", "type": "ASSET", "...": "..." },
+    "start_date": "2026-09-01T00:00:00Z",
+    "end_date": "2026-11-01T00:00:00Z",
+    "normal_balance": "DEBIT",
+    "opening_balance": 100000,
+    "closing_balance": 250000,
+    "lines": [
+      {
+        "line_id": "uuid",
+        "journal_entry_id": "uuid",
+        "reference": "INV-001",
+        "transaction_date": "2026-09-15T00:00:00Z",
+        "notes": null,
+        "debit": 150000,
+        "credit": 0,
+        "running_balance": 250000
+      }
+    ]
+  },
+  "meta": { "page": 1, "page_size": 50, "total": 1, "has_next_page": false, "has_previous_page": false }
+}
+```
+
+Balances are on the account's normal side: ASSET and EXPENSE are debit-normal, the others credit-normal, and a contra account is the opposite of its type. `running_balance` continues across pages; `closing_balance` covers the whole range. Group accounts and other clients' accounts return `404`.
 
 ---
 
@@ -283,8 +335,8 @@ curl -X POST https://fincore-engine.fly.dev/api/v1/journal-entries \
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `status` | enum | Yes | `DRAFT` or `POSTED` |
-| `reference` | string | Yes | Unique reference (e.g. invoice number, 3–255 chars) |
-| `transaction_date` | date | No | ISO 8601 date (e.g. `2024-01-15`) |
+| `reference` | string | Yes | Unique per client (e.g. invoice number, 3–255 chars) |
+| `transaction_date` | date | No | `2024-01-15` or RFC3339. Defaults to now. |
 | `metadata` | object | No | Arbitrary JSON for your own use |
 | `lines` | array | Yes | Minimum 2 lines; total debits must equal total credits |
 
@@ -298,6 +350,11 @@ curl -X POST https://fincore-engine.fly.dev/api/v1/journal-entries \
 
 **Response:** `201 Created` — returns the full journal entry with lines.
 
+**Duplicate reference:** `409 Conflict`. The existing entry's id is included, so a retried create can treat it as success:
+```json
+{ "errors": { "message": "a journal entry with this reference already exists", "journal_entry_id": "uuid" } }
+```
+
 ---
 
 ### GET /api/v1/journal-entries — List journal entries
@@ -307,7 +364,9 @@ Additional filters:
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `status` | enum | Filter by `DRAFT` or `POSTED` |
-| `populate` | string | Use `JournalEntryLines` and/or `Account` |
+| `account_id` | UUID | Only entries with at least one line on this account |
+| `reference` | string | Only the entry with exactly this reference |
+| `populate` | string | `JournalEntryLines`, and/or `Account` for lines with their accounts |
 
 ---
 
@@ -361,6 +420,45 @@ curl -X PATCH https://fincore-engine.fly.dev/api/v1/journal-entries/uuid/post \
 Only DRAFT entries can be deleted.
 
 **Response:** `204 No Content`
+
+---
+
+## Reports API
+
+### GET /api/v1/reports/trial-balance — Trial balance
+
+Every non-group account with its posted totals and balance. Only `POSTED` entries count.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `as_of` | date or RFC3339 | Include entries dated before this point; a date-only value includes that whole day. Defaults to now. |
+
+**Response:** `200 OK`
+```json
+{
+  "data": {
+    "as_of": "2026-11-01T00:00:00Z",
+    "total_debit": 500000,
+    "total_credit": 500000,
+    "accounts": [
+      {
+        "account_id": "uuid",
+        "code": "1000",
+        "name": "Cash",
+        "type": "ASSET",
+        "is_contra": false,
+        "parent_account_id": null,
+        "normal_balance": "DEBIT",
+        "total_debit": 500000,
+        "total_credit": 250000,
+        "balance": 250000
+      }
+    ]
+  }
+}
+```
+
+`balance` is on the account's normal side and is negative when the account sits on the other side.
 
 ---
 
@@ -447,8 +545,11 @@ The entry is now `POSTED` and immutable.
 
 - Every journal entry must have at least 2 lines
 - Sum of all `debit` values across all lines must equal sum of all `credit` values
-- Each line must have exactly one of debit or credit as non-zero (though both can be provided)
+- Each line must have exactly one of `debit` or `credit` above zero
+- The entry's total can't be zero
+- Lines can only post to your own non-group accounts
 - Amounts are integers (whole numbers) representing the smallest currency unit
+- Posted entries can't change; to reverse one, post a new entry with debits and credits swapped
 
 ## Common Errors
 
@@ -456,5 +557,8 @@ The entry is now `POSTED` and immutable.
 |-------------|---------|
 | 400 | Bad request — see `errors.message` for details |
 | 401 | Unauthorized — missing or invalid auth headers |
+| 404 | Not found, or belongs to another client |
+| 409 | Journal entry reference already used — `errors.journal_entry_id` is the existing entry |
 | 422 | Validation error — field-level validation failed |
+| 429 | Rate limited |
 | 500 | Internal server error |

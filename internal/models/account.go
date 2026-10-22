@@ -11,7 +11,8 @@ type Account struct {
 	ClientID string `json:"client_id" gorm:"not null;index;"`
 	Client   Client
 
-	Code        string  `json:"code"        gorm:"not null;uniqueIndex;"`
+	// Unique per client via idx_accounts_client_code (created by migration).
+	Code        string  `json:"code"        gorm:"not null;"`
 	Name        string  `json:"name"        gorm:"not null;"`
 	Description *string `json:"description"`
 	Type        string  `json:"type"        gorm:"not null; index;"` // EXPENSE | LIABILITY | EQUITY | ASSET | INCOME
@@ -34,7 +35,7 @@ func (acc *Account) BeforeDelete(tx *gorm.DB) (err error) {
 
 	// prevent deletion if the account has associated journal entries
 	var journalEntriesCount int64
-	tx.Model(&JournalEntry{}).Where("account_id = ?", acc.ID).Count(&journalEntriesCount)
+	tx.Model(&JournalEntryLine{}).Where("account_id = ?", acc.ID).Count(&journalEntriesCount)
 
 	if journalEntriesCount > 0 {
 		return errors.New("cannot delete an account that has associated journal entries")

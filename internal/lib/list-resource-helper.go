@@ -1,7 +1,9 @@
 package lib
 
 import (
+	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
@@ -120,4 +122,80 @@ func GenerateEmptyQuery() FilterQuery {
 		DateRange: nil,
 		Populate:  nil,
 	}
+}
+
+// ListOptions is the allowlist a list endpoint accepts for sorting, searching
+// and eager-loading. Populate maps the API name to the GORM preload path.
+type ListOptions struct {
+	OrderBy      []string
+	SearchFields []string
+	Populate     map[string]string
+}
+
+// Restrict rejects any order_by, search field or populate value outside opts
+// and rewrites Populate to preload paths. These values end up in raw SQL, so
+// they must never pass through unchecked.
+func (q *FilterQuery) Restrict(opts ListOptions) error {
+	if q.OrderBy != "" && !slices.Contains(opts.OrderBy, q.OrderBy) {
+		return fmt.Errorf("order_by must be one of: %s", strings.Join(opts.OrderBy, ", "))
+	}
+
+	if q.Search != nil {
+		for _, field := range q.Search.SearchFields {
+			if !slices.Contains(opts.SearchFields, field) {
+				return fmt.Errorf("search_fields must be from: %s", strings.Join(opts.SearchFields, ", "))
+			}
+		}
+	}
+
+	populate, err := RestrictPopulate(q.Populate, opts.Populate)
+	if err != nil {
+		return err
+	}
+	q.Populate = populate
+
+	return nil
+}
+
+// RestrictPopulate maps API populate names to preload paths, rejecting unknown names.
+func RestrictPopulate(populate *[]string, allowed map[string]string) (*[]string, error) {
+	if populate == nil {
+		return nil, nil
+	}
+
+	paths := make([]string, 0, len(*populate))
+	for _, field := range *populate {
+		path, ok := allowed[field]
+		if !ok {
+			names := make([]string, 0, len(allowed))
+			for name := range allowed {
+				names = append(names, name)
+			}
+			slices.Sort(names)
+			return nil, fmt.Errorf("populate must be from: %s", strings.Join(names, ", "))
+		}
+		paths = append(paths, path)
+	}
+
+	return &paths, nil
+}
+
+// ParseDateParam accepts a date (2006-01-02) or an RFC3339 timestamp. With
+// endOfDay, a date-only value returns the start of the next day (UTC) so it
+// can be used as an exclusive upper bound covering the whole day.
+func ParseDateParam(value string, endOfDay bool) (time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, value); err == nil {
+		return t, nil
+	}
+
+	t, err := time.Parse(time.DateOnly, value)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid date %q: use YYYY-MM-DD or RFC3339", value)
+	}
+
+	if endOfDay {
+		return t.AddDate(0, 0, 1), nil
+	}
+
+	return t, nil
 }

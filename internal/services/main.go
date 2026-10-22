@@ -8,6 +8,7 @@ type Services struct {
 	ClientService       ClientService
 	AccountService      AccountService
 	JournalEntryService JournalEntryService
+	ReportService       ReportService
 }
 
 func NewServices(repository repository.Repository) Services {
@@ -19,9 +20,12 @@ func NewServices(repository repository.Repository) Services {
 		repository.JournalEntryLineRepository,
 	)
 
+	reportService := NewReportService(repository.LedgerRepository, repository.AccountRepository)
+
 	return Services{
 		ClientService:       clientService,
 		AccountService:      accountService,
 		JournalEntryService: journalEntryService,
+		ReportService:       reportService,
 	}
 }

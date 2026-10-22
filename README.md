@@ -58,6 +58,12 @@ To initialize or update the database schema, run:
   go run init/main.go init/setup.go -init false
   ```
 
+### Production migration order
+Run `make update-db` against production **before** deploying a version that contains new
+migrations. Migrations don't run on deploy. The `20261021_per_client_codes_unique_references`
+migration in particular must run first: the new code generates account codes per client, which
+would collide with the old global code index.
+
 ## Running the Service Locally
 - **Development mode (with hot reload):**
   ```sh

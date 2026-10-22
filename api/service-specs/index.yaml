@@ -255,6 +255,76 @@ paths:
       tags:
         - Account
 
+  /api/v1/accounts/{account_id}/ledger:
+    get:
+      summary: An account's posted lines with opening, running and closing balances
+      parameters:
+        - $ref: ./parameters/account_id.yaml
+        - $ref: ./parameters/ledger_start_date.yaml
+        - $ref: ./parameters/ledger_end_date.yaml
+        - $ref: ./parameters/page.yaml
+        - name: page_size
+          description: Lines per page, 1 to 200. Defaults to 50.
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 50
+      responses:
+        '200':
+          description: The account ledger with pagination info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/account_ledger.yaml
+                  meta:
+                    $ref: ./schemas/common/meta.yaml
+        '400':
+          description: Bad date or paging parameter.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '404':
+          description: The account doesn't exist, belongs to another client, or is a group account.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Account
+
+  /api/v1/reports/trial-balance:
+    get:
+      summary: Trial balance of every non-group account
+      parameters:
+        - $ref: ./parameters/as_of.yaml
+      responses:
+        '200':
+          description: The trial balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: ./schemas/trial_balance.yaml
+        '400':
+          description: Bad as_of date.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/bad_request.yaml
+        '500':
+          description: Internal Server Error
+      tags:
+        - Report
+
   /api/v1/journal-entries:
     post:
       summary: Create a new journal entry
@@ -279,6 +349,12 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/common/bad_request.yaml
+        '409':
+          description: Duplicate reference. The existing entry's id is returned.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/conflict.yaml
         '422':
           description: Parameter Validation errors
           content:
@@ -303,6 +379,8 @@ paths:
         - $ref: ./parameters/end_date.yaml
         - $ref: ./parameters/populate_journal_entry.yaml
         - $ref: ./parameters/journal_entry_status.yaml
+        - $ref: ./parameters/account_id_query.yaml
+        - $ref: ./parameters/reference.yaml
       responses:
         '200':
           description: Return a list of journal entries with pagination info
@@ -360,6 +438,12 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/common/bad_request.yaml
+        '409':
+          description: Duplicate reference. The existing entry's id is returned.
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/common/conflict.yaml
         '422':
           description: Parameter Validation errors
           content:

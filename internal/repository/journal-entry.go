@@ -21,6 +21,7 @@ type JournalEntryRepository interface {
 		populate *[]string,
 	) (*models.JournalEntry, error)
 	GetByID(context context.Context, id string, populate *[]string) (*models.JournalEntry, error)
+	GetByReference(ctx context.Context, clientID string, reference string) (*models.JournalEntry, error)
 	List(
 		context context.Context,
 		filterQuery lib.FilterQuery,
@@ -107,8 +108,10 @@ func (r *journalEntryRepository) GetByID(
 }
 
 type ListJournalEntriesFilter struct {
-	ClientId string
-	Status   *string
+	ClientId  string
+	Status    *string
+	AccountID *string
+	Reference *string
 }
 
 func (r *journalEntryRepository) List(
@@ -123,6 +126,8 @@ func (r *journalEntryRepository) List(
 			DateRangeScope("journal_entries", filterQuery.DateRange),
 			ClientFilterScope("journal_entries", filters.ClientId),
 			StatusFilterScope(filters.Status),
+			AccountFilterScope(filters.AccountID),
+			ReferenceFilterScope(filters.Reference),
 			SearchScope("journal_entries", filterQuery.Search),
 
 			PaginationScope(filterQuery.Page, filterQuery.PageSize),
@@ -158,6 +163,8 @@ func (r *journalEntryRepository) Count(
 			DateRangeScope("journal_entries", filterQuery.DateRange),
 			ClientFilterScope("journal_entries", filters.ClientId),
 			StatusFilterScope(filters.Status),
+			AccountFilterScope(filters.AccountID),
+			ReferenceFilterScope(filters.Reference),
 			SearchScope("journal_entries", filterQuery.Search),
 		).
 		Count(&count)
@@ -176,5 +183,52 @@ func StatusFilterScope(status *string) func(db *gorm.DB) *gorm.DB {
 		}
 
 		return db.Where("journal_entries.status = ?", *status)
+	}
+}
+
+// GetByReference returns the client's live entry with this reference, or nil if none.
+func (r *journalEntryRepository) GetByReference(
+	ctx context.Context,
+	clientID string,
+	reference string,
+) (*models.JournalEntry, error) {
+	var journalEntry models.JournalEntry
+	result := r.DB.WithContext(ctx).
+		Where("client_id = ? AND reference = ?", clientID, reference).
+		Limit(1).
+		Find(&journalEntry)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+
+	return &journalEntry, nil
+}
+
+// AccountFilterScope keeps entries with at least one live line on the account.
+func AccountFilterScope(accountID *string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if accountID == nil || *accountID == "" {
+			return db
+		}
+
+		return db.Where(
+			`EXISTS (SELECT 1 FROM journal_entry_lines l
+				WHERE l.journal_entry_id = journal_entries.id AND l.account_id = ? AND l.deleted_at IS NULL)`,
+			*accountID,
+		)
+	}
+}
+
+func ReferenceFilterScope(reference *string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if reference == nil || *reference == "" {
+			return db
+		}
+
+		return db.Where("journal_entries.reference = ?", *reference)
 	}
 }

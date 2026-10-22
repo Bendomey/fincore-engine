@@ -1,0 +1,7 @@
+name: reference
+description: Only the journal entry with exactly this reference.
+in: query
+required: false
+schema:
+  type: string
+  example: "INV-001"

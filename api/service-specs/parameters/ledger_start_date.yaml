@@ -1,0 +1,9 @@
+name: start_date
+description: >-
+  First day of the ledger (YYYY-MM-DD or RFC3339), by transaction date. Lines before it make up
+  the opening balance. Omit to start from the first posting.
+in: query
+required: false
+schema:
+  type: string
+  example: "2026-09-01"

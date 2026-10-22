@@ -1,0 +1,49 @@
+type: object
+description: >-
+  Every non-group account with its posted totals. Only POSTED entries count. Assets and expenses
+  are debit-normal, other types credit-normal; a contra account is the opposite of its type.
+properties:
+  as_of:
+    type: string
+    format: date-time
+  total_debit:
+    type: integer
+    format: int64
+    description: Sum of all debits, in the smallest currency unit.
+  total_credit:
+    type: integer
+    format: int64
+    description: Sum of all credits; always equals total_debit.
+  accounts:
+    type: array
+    items:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid4
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: ./enums/account_type.yaml
+        is_contra:
+          type: boolean
+        parent_account_id:
+          type: string
+          format: uuid4
+          nullable: true
+        normal_balance:
+          type: string
+          enum: [DEBIT, CREDIT]
+        total_debit:
+          type: integer
+          format: int64
+        total_credit:
+          type: integer
+          format: int64
+        balance:
+          type: integer
+          format: int64
+          description: Balance on the account's normal side; negative when it's on the other side.

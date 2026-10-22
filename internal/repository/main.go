@@ -7,6 +7,7 @@ type Repository struct {
 	AccountRepository          AccountRepository
 	JournalEntryRepository     JournalEntryRepository
 	JournalEntryLineRepository JournalEntryLineRepository
+	LedgerRepository           LedgerRepository
 }
 
 func NewRepository(db *gorm.DB) Repository {
@@ -14,11 +15,13 @@ func NewRepository(db *gorm.DB) Repository {
 	accountRepository := NewAccountRepository(db)
 	journalEntryRepository := NewJournalEntryRepository(db)
 	journalEntryLineRepository := NewJournalEntryLineRepository(db)
+	ledgerRepository := NewLedgerRepository(db)
 
 	return Repository{
 		ClientRepository:           clientRepository,
 		AccountRepository:          accountRepository,
 		JournalEntryRepository:     journalEntryRepository,
 		JournalEntryLineRepository: journalEntryLineRepository,
+		LedgerRepository:           ledgerRepository,
 	}
 }

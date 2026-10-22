@@ -1,5 +1,7 @@
 name: populate
-description: Populate entities.
+description: >-
+  Comma-separated relations to include. JournalEntryLines includes the lines;
+  Account includes the lines with their accounts. Any other value returns 400.
 in: query
 required: false
 schema:
@@ -7,6 +9,5 @@ schema:
   items:
     type: string
     enum:
-      - Account
-      - JournalEntry
       - JournalEntryLines
+      - Account
